@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "generated_at": "2025-11-20T14:07:54.636158",
+    "total_records": 114
+  },
+  "analysis": {
+    "basic_statistics": {
+      "total_jobs": 114,
+      "total_companies": 69,
+      "total_cities": 1,
+      "data_fields": 22,
+      "date_range": {
+        "start": "NaT",
+        "end": "NaT"
+      },
+      "sources": {
+        "猎聘网": 114
+      }
+    },
+    "salary_analysis": {
+      "overall": {
+        "mean": 27157.894736842107,
+        "median": 24000.0,
+        "std": 11071.432542245568,
+        "min": 4500.0,
+        "max": 55000.0,
+        "q1": 20000.0,
+        "q3": 35000.0
+      },
+      "by_city": {
+        "未知": {
+          "count": 114,
+          "mean": 27158.0,
+          "median": 24000.0,
+          "min": 4500.0,
+          "max": 55000.0
+        }
+      },
+      "by_education": {
+        "不限": {
+          "count": 114,
+          "mean": 27158.0,
+          "median": 24000.0
+        }
+      },
+      "by_experience": {
+        "不限": {
+          "count": 114,
+          "mean": 27158.0,
+          "median": 24000.0
+        }
+      },
+      "by_industry": {}
+    },
+    "distribution": {
+      "by_city": {
+        "未知": 114
+      },
+      "by_education": {
+        "不限": 114
+      },
+      "by_experience": {
+        "不限": 114
+      },
+      "by_company_size": {},
+      "by_industry": {}
+    },
+    "correlations": {
+      "numeric_correlation": {
+        "salary_min": {
+          "salary_min": 1.0,
+          "salary_max": 0.9170515197106457,
+          "salary_avg": 0.9647285751699377,
+          "salary_months": NaN
+        },
+        "salary_max": {
+          "salary_min": 0.9170515197106457,
+          "salary_max": 1.0,
+          "salary_avg": 0.9896803245914378,
+          "salary_months": NaN
+        },
+        "salary_avg": {
+          "salary_min": 0.9647285751699377,
+          "salary_max": 0.9896803245914378,
+          "salary_avg": 1.0,
+          "salary_months": NaN
+        },
+        "salary_months": {
+          "salary_min": NaN,
+          "salary_max": NaN,
+          "salary_avg": NaN,
+          "salary_months": NaN
+        }
+      }
+    }
+  }
+}

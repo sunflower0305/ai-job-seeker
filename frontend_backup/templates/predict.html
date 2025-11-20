@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薪资预测 - 职位推荐系统</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">职位推荐系统</a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="jobs.html">职位列表</a></li>
+                <li><a href="recommend.html">智能推荐</a></li>
+                <li><a href="predict.html">薪资预测</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h1 class="text-center mb-3" style="font-size: 2rem;">薪资预测</h1>
+        <p class="text-center mb-3" style="color: #666;">基于机器学习模型，预测您的市场薪资水平</p>
+
+        <div class="grid grid-2" style="align-items: start;">
+            <!-- 输入表单 -->
+            <div class="card">
+                <h3 class="card-title">填写您的信息</h3>
+                <form id="predict-form">
+                    <div class="form-group">
+                        <label class="form-label" for="city">工作城市 *</label>
+                        <select id="city" class="form-select" required>
+                            <option value="">请选择</option>
+                            <option value="北京" selected>北京</option>
+                            <option value="上海">上海</option>
+                            <option value="广州">广州</option>
+                            <option value="深圳">深圳</option>
+                            <option value="杭州">杭州</option>
+                            <option value="成都">成都</option>
+                            <option value="武汉">武汉</option>
+                            <option value="南京">南京</option>
+                            <option value="西安">西安</option>
+                            <option value="重庆">重庆</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="education">学历 *</label>
+                        <select id="education" class="form-select" required>
+                            <option value="大专">大专</option>
+                            <option value="本科" selected>本科</option>
+                            <option value="硕士">硕士</option>
+                            <option value="博士">博士</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="experience">工作经验 *</label>
+                        <select id="experience" class="form-select" required>
+                            <option value="1年以下">1年以下</option>
+                            <option value="1-3年">1-3年</option>
+                            <option value="3-5年" selected>3-5年</option>
+                            <option value="5-10年">5-10年</option>
+                            <option value="10年以上">10年以上</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="industry">行业</label>
+                        <input
+                            type="text"
+                            id="industry"
+                            class="form-input"
+                            value="互联网"
+                            placeholder="例如: 互联网, 金融, AI"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="company_size">公司规模</label>
+                        <select id="company_size" class="form-select">
+                            <option value="20人以下">20人以下</option>
+                            <option value="20-99人">20-99人</option>
+                            <option value="100-499人" selected>100-499人</option>
+                            <option value="500-999人">500-999人</option>
+                            <option value="1000-9999人">1000-9999人</option>
+                            <option value="10000人以上">10000人以上</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="company_type">公司类型</label>
+                        <select id="company_type" class="form-select">
+                            <option value="民营" selected>民营</option>
+                            <option value="国企">国企</option>
+                            <option value="外企">外企</option>
+                            <option value="上市公司">上市公司</option>
+                            <option value="创业公司">创业公司</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="salary_months">薪资月数</label>
+                        <input
+                            type="number"
+                            id="salary_months"
+                            class="form-input"
+                            value="13"
+                            min="12"
+                            max="18"
+                        >
+                        <small style="color: #666;">12薪、13薪、14薪等</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">技能标签</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input
+                                type="text"
+                                id="skill-input"
+                                class="form-input"
+                                placeholder="输入技能后按回车添加"
+                                style="flex: 1;"
+                            >
+                        </div>
+                        <div id="skills-display" class="job-tags"></div>
+                        <small style="color: #666;">添加技能可提高预测准确度</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+                        开始预测
+                    </button>
+                </form>
+            </div>
+
+            <!-- 预测结果 -->
+            <div>
+                <div id="result-card" class="card" style="display: none;">
+                    <h3 class="card-title text-center">预测结果</h3>
+
+                    <div style="text-align: center; padding: 2rem 0;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary-color); margin-bottom: 1rem;">
+                            <span id="predicted-salary">-</span>
+                        </div>
+                        <p style="color: #666;">月薪（元）</p>
+                    </div>
+
+                    <div class="grid grid-2" style="margin: 2rem 0;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--secondary-color);">
+                                <span id="salary-min">-</span>
+                            </div>
+                            <p style="color: #666; margin-top: 0.5rem;">薪资下限</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--danger-color);">
+                                <span id="salary-max">-</span>
+                            </div>
+                            <p style="color: #666; margin-top: 0.5rem;">薪资上限</p>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--light-color); padding: 1.5rem; border-radius: 5px; margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>预估年薪:</span>
+                            <strong id="annual-salary" style="font-size: 1.2rem; color: var(--primary-color);">-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>置信度:</span>
+                            <strong id="confidence">80%</strong>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <strong>提示:</strong> 此预测基于随机森林模型，MAE 2,985元，R² 0.51。实际薪资可能受多种因素影响。
+                    </div>
+                </div>
+
+                <div id="model-info" class="card mt-2">
+                    <h3 class="card-title">模型信息</h3>
+                    <ul style="line-height: 2; color: #666;">
+                        <li><strong>算法:</strong> 随机森林回归</li>
+                        <li><strong>特征数:</strong> 15维特征</li>
+                        <li><strong>训练集:</strong> 309个职位样本</li>
+                        <li><strong>MAE:</strong> 2,985元</li>
+                        <li><strong>R²:</strong> 0.5144</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        // 技能标签管理
+        const skills = [];
+        const skillInput = document.getElementById('skill-input');
+        const skillsDisplay = document.getElementById('skills-display');
+
+        skillInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const skill = skillInput.value.trim();
+                if (skill && !skills.includes(skill)) {
+                    skills.push(skill);
+                    updateSkillsDisplay();
+                    skillInput.value = '';
+                }
+            }
+        });
+
+        function updateSkillsDisplay() {
+            skillsDisplay.innerHTML = skills.map(skill => `
+                <span class="tag tag-primary">
+                    ${skill}
+                    <span onclick="removeSkill('${skill}')" style="cursor: pointer; margin-left: 0.5rem;">×</span>
+                </span>
+            `).join('');
+        }
+
+        function removeSkill(skill) {
+            const index = skills.indexOf(skill);
+            if (index > -1) {
+                skills.splice(index, 1);
+                updateSkillsDisplay();
+            }
+        }
+
+        // 初始化默认技能
+        ['Python', 'Django'].forEach(skill => skills.push(skill));
+        updateSkillsDisplay();
+
+        // 更新导航栏
+        updateNavbar();
+
+        // 处理预测表单提交
+        document.getElementById('predict-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const jobFeatures = {
+                city: document.getElementById('city').value,
+                education: document.getElementById('education').value,
+                experience: document.getElementById('experience').value,
+                industry: document.getElementById('industry').value,
+                company_size: document.getElementById('company_size').value,
+                company_type: document.getElementById('company_type').value,
+                salary_months: parseInt(document.getElementById('salary_months').value),
+                skills: skills
+            };
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const resultCard = document.getElementById('result-card');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '预测中...';
+
+            try {
+                const result = await api.predictSalary(jobFeatures);
+
+                // 显示结果
+                document.getElementById('predicted-salary').textContent =
+                    Math.round(result.predicted_salary).toLocaleString();
+                document.getElementById('salary-min').textContent =
+                    Math.round(result.salary_min).toLocaleString();
+                document.getElementById('salary-max').textContent =
+                    Math.round(result.salary_max).toLocaleString();
+                document.getElementById('annual-salary').textContent =
+                    `${result.annual_salary}万元`;
+                document.getElementById('confidence').textContent =
+                    `${(result.confidence * 100).toFixed(0)}%`;
+
+                resultCard.style.display = 'block';
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                showAlert('薪资预测完成！', 'success');
+            } catch (error) {
+                showAlert(`预测失败: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '开始预测';
+            }
+        });
+    </script>
+</body>
+</html>

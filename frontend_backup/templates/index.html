@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招聘数据分析与职位推荐系统</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">职位推荐系统</a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="jobs.html">职位列表</a></li>
+                <li><a href="recommend.html">智能推荐</a></li>
+                <li><a href="predict.html">薪资预测</a></li>
+            </ul>
+            <div class="navbar-user">
+                <a href="login.html" class="btn btn-outline btn-small">登录</a>
+                <a href="register.html" class="btn btn-outline btn-small">注册</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主横幅 -->
+    <section style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4rem 0; text-align: center;">
+        <div class="container">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">智能招聘数据分析与职位推荐</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9;">基于机器学习的职位匹配与薪资预测平台</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="recommend.html" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">获取职位推荐</a>
+                <a href="predict.html" class="btn btn-outline" style="padding: 0.75rem 2rem; font-size: 1.1rem;">预测薪资</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 功能介绍 -->
+    <section style="padding: 4rem 0;">
+        <div class="container">
+            <h2 class="text-center mb-3" style="font-size: 2rem;">核心功能</h2>
+            <div class="grid grid-3">
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                    <h3 class="card-title">职位搜索</h3>
+                    <p class="card-content">多维度筛选，快速找到心仪职位。支持按城市、薪资、学历、经验等条件过滤。</p>
+                    <a href="jobs.html" class="btn btn-primary mt-2">开始搜索</a>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+                    <h3 class="card-title">智能推荐</h3>
+                    <p class="card-content">基于TF-IDF算法，根据您的技能和期望智能匹配最合适的职位。</p>
+                    <a href="recommend.html" class="btn btn-primary mt-2">获取推荐</a>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
+                    <h3 class="card-title">薪资预测</h3>
+                    <p class="card-content">随机森林模型预测，帮您了解不同职位的市场薪资水平。</p>
+                    <a href="predict.html" class="btn btn-primary mt-2">预测薪资</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 数据统计 -->
+    <section style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 3rem 0;" id="stats-section">
+        <div class="container">
+            <div class="grid grid-3">
+                <div class="stats-card" style="color: white;">
+                    <div class="stats-number" id="jobs-count" style="color: white;">-</div>
+                    <div class="stats-label" style="color: rgba(255,255,255,0.9);">职位数量</div>
+                </div>
+                <div class="stats-card" style="color: white;">
+                    <div class="stats-number" id="avg-salary" style="color: white;">-</div>
+                    <div class="stats-label" style="color: rgba(255,255,255,0.9);">平均薪资</div>
+                </div>
+                <div class="stats-card" style="color: white;">
+                    <div class="stats-number" id="model-accuracy" style="color: white;">-</div>
+                    <div class="stats-label" style="color: rgba(255,255,255,0.9);">模型准确度</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技术特点 -->
+    <section style="padding: 4rem 0;">
+        <div class="container">
+            <h2 class="text-center mb-3" style="font-size: 2rem;">技术亮点</h2>
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3 class="card-title">🤖 机器学习算法</h3>
+                    <ul class="card-content" style="line-height: 2;">
+                        <li><strong>职位推荐</strong>: TF-IDF + 余弦相似度</li>
+                        <li><strong>薪资预测</strong>: 随机森林回归模型</li>
+                        <li><strong>特征工程</strong>: 15维特征，500+TF-IDF特征</li>
+                        <li><strong>模型性能</strong>: MAE 2,985元, R² 0.51</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">📊 数据处理流程</h3>
+                    <ul class="card-content" style="line-height: 2;">
+                        <li><strong>数据清洗</strong>: 智能去重、异常值处理</li>
+                        <li><strong>数据分析</strong>: 多维度薪资分析</li>
+                        <li><strong>可视化</strong>: 7种专业图表展示</li>
+                        <li><strong>实时预测</strong>: 毫秒级响应速度</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer style="background-color: var(--dark-color); color: white; padding: 2rem 0; text-align: center;">
+        <div class="container">
+            <p>&copy; 2025 招聘数据分析与职位推荐系统. All rights reserved.</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">基于Django + 机器学习构建</p>
+        </div>
+    </footer>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 更新导航栏
+            updateNavbar();
+
+            // 加载统计数据
+            try {
+                const status = await api.getModelStatus();
+
+                // 更新职位数量
+                document.getElementById('jobs-count').textContent = status.recommender.jobs_count;
+
+                // 更新平均薪资（示例数据）
+                document.getElementById('avg-salary').textContent = '12,964元';
+
+                // 更新模型准确度
+                document.getElementById('model-accuracy').textContent = '51.4%';
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+{
+  "original_count": 366,
+  "final_count": 114,
+  "removed_count": 252,
+  "removal_rate": "68.85%",
+  "fields_count": 22,
+  "fields": [
+    "job_title",
+    "company_name",
+    "salary_min",
+    "salary_max",
+    "salary_months",
+    "city",
+    "experience",
+    "education",
+    "company_size",
+    "company_type",
+    "industry",
+    "job_description",
+    "job_tags",
+    "welfare",
+    "source",
+    "url",
+    "publish_time",
+    "crawl_time",
+    "salary_avg",
+    "salary_yearly_min",
+    "salary_yearly_max",
+    "salary_yearly_avg"
+  ],
+  "field_stats": {
+    "job_title": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "company_name": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_min": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_max": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_months": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "city": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "experience": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "education": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "company_size": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "company_type": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "industry": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "job_description": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "job_tags": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "welfare": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "source": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "url": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "publish_time": {
+      "non_null": 0,
+      "null": 114,
+      "completeness": "0.00%"
+    },
+    "crawl_time": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_avg": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_yearly_min": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_yearly_max": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_yearly_avg": {
+      "non_null": 114,
+      "null": 0,
+      "completeness": "100.00%"
+    }
+  },
+  "city_distribution": {
+    "未知": 114
+  },
+  "education_distribution": {
+    "不限": 114
+  },
+  "experience_distribution": {
+    "不限": 114
+  },
+  "source_distribution": {
+    "猎聘网": 114
+  },
+  "salary_stats": {
+    "min": 4000,
+    "max": 70000,
+    "avg_min": 20228,
+    "avg_max": 34087,
+    "median_avg": 24000
+  }
+}

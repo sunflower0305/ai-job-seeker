@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 职位推荐系统</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 2rem 0;
+        }
+        .register-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .register-header h1 {
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        .register-header p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="register-header">
+                <h1>用户注册</h1>
+                <p>创建账号，开启您的求职之旅</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">用户名 *</label>
+                    <input
+                        type="text"
+                        id="username"
+                        class="form-input"
+                        placeholder="请输入用户名"
+                        required
+                        minlength="3"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">邮箱 *</label>
+                    <input
+                        type="email"
+                        id="email"
+                        class="form-input"
+                        placeholder="请输入邮箱"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">密码 *</label>
+                    <input
+                        type="password"
+                        id="password"
+                        class="form-input"
+                        placeholder="请输入密码（至少6位）"
+                        required
+                        minlength="6"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password_confirm">确认密码 *</label>
+                    <input
+                        type="password"
+                        id="password_confirm"
+                        class="form-input"
+                        placeholder="请再次输入密码"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="role">用户类型</label>
+                    <select id="role" class="form-select">
+                        <option value="jobseeker">求职者</option>
+                        <option value="employer">招聘者</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">手机号（可选）</label>
+                    <input
+                        type="tel"
+                        id="phone"
+                        class="form-input"
+                        placeholder="请输入手机号"
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+                    注册
+                </button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p style="color: #666;">
+                    已有账号？
+                    <a href="login.html" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">立即登录</a>
+                </p>
+                <p style="margin-top: 1rem;">
+                    <a href="index.html" style="color: var(--primary-color); text-decoration: none;">返回首页</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        // 如果已登录，跳转到首页
+        if (api.isAuthenticated()) {
+            window.location.href = 'index.html';
+        }
+
+        // 处理注册表单提交
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password_confirm').value;
+            const role = document.getElementById('role').value;
+            const phone = document.getElementById('phone').value;
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const alertContainer = document.getElementById('alert-container');
+
+            // 清空提示
+            alertContainer.innerHTML = '';
+
+            // 验证密码
+            if (password !== passwordConfirm) {
+                alertContainer.innerHTML = '<div class="alert alert-error">两次密码输入不一致</div>';
+                return;
+            }
+
+            // 禁用提交按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '注册中...';
+
+            try {
+                await api.register({
+                    username,
+                    email,
+                    password,
+                    password_confirm: passwordConfirm,
+                    role,
+                    phone
+                });
+
+                // 显示成功提示
+                alertContainer.innerHTML = '<div class="alert alert-success">注册成功！即将跳转...</div>';
+
+                // 延迟跳转
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            } catch (error) {
+                // 显示错误提示
+                let errorMessage = error.message;
+                if (typeof errorMessage === 'object') {
+                    errorMessage = JSON.stringify(errorMessage);
+                }
+                alertContainer.innerHTML = `<div class="alert alert-error">注册失败: ${errorMessage}</div>`;
+
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = '注册';
+            }
+        });
+    </script>
+</body>
+</html>

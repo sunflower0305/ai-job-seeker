@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能推荐 - 职位推荐系统</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">职位推荐系统</a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="jobs.html">职位列表</a></li>
+                <li><a href="recommend.html">智能推荐</a></li>
+                <li><a href="predict.html">薪资预测</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h1 class="text-center mb-3" style="font-size: 2rem;">智能职位推荐</h1>
+        <p class="text-center mb-3" style="color: #666;">基于您的技能和期望，为您推荐最匹配的职位</p>
+
+        <!-- 输入表单 -->
+        <div class="card" style="max-width: 800px; margin: 0 auto 2rem;">
+            <form id="recommend-form">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">技能标签 *</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input
+                                type="text"
+                                id="skill-input"
+                                class="form-input"
+                                placeholder="输入技能后按回车添加"
+                                style="flex: 1;"
+                            >
+                        </div>
+                        <div id="skills-display" class="job-tags"></div>
+                        <small style="color: #666;">例如: Python, Java, Django, Vue 等</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="experience">工作经验</label>
+                        <select id="experience" class="form-select">
+                            <option value="">不限</option>
+                            <option value="1年以下">1年以下</option>
+                            <option value="1-3年">1-3年</option>
+                            <option value="3-5年" selected>3-5年</option>
+                            <option value="5-10年">5-10年</option>
+                            <option value="10年以上">10年以上</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="education">学历要求</label>
+                        <select id="education" class="form-select">
+                            <option value="">不限</option>
+                            <option value="大专">大专</option>
+                            <option value="本科" selected>本科</option>
+                            <option value="硕士">硕士</option>
+                            <option value="博士">博士</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="preferred_city">期望城市</label>
+                        <input
+                            type="text"
+                            id="preferred_city"
+                            class="form-input"
+                            placeholder="例如: 北京"
+                            value="北京"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="preferred_industry">期望行业</label>
+                        <input
+                            type="text"
+                            id="preferred_industry"
+                            class="form-input"
+                            placeholder="例如: 互联网"
+                            value="互联网"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="top_n">推荐数量</label>
+                        <input
+                            type="number"
+                            id="top_n"
+                            class="form-input"
+                            value="10"
+                            min="1"
+                            max="50"
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+                    获取推荐
+                </button>
+            </form>
+        </div>
+
+        <!-- 推荐结果 -->
+        <div id="results-container"></div>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        // 技能标签管理
+        const skills = [];
+        const skillInput = document.getElementById('skill-input');
+        const skillsDisplay = document.getElementById('skills-display');
+
+        // 添加技能
+        skillInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const skill = skillInput.value.trim();
+                if (skill && !skills.includes(skill)) {
+                    skills.push(skill);
+                    updateSkillsDisplay();
+                    skillInput.value = '';
+                }
+            }
+        });
+
+        // 更新技能显示
+        function updateSkillsDisplay() {
+            skillsDisplay.innerHTML = skills.map(skill => `
+                <span class="tag tag-primary">
+                    ${skill}
+                    <span onclick="removeSkill('${skill}')" style="cursor: pointer; margin-left: 0.5rem;">×</span>
+                </span>
+            `).join('');
+        }
+
+        // 删除技能
+        function removeSkill(skill) {
+            const index = skills.indexOf(skill);
+            if (index > -1) {
+                skills.splice(index, 1);
+                updateSkillsDisplay();
+            }
+        }
+
+        // 初始化一些默认技能
+        ['Python', 'Django'].forEach(skill => {
+            skills.push(skill);
+        });
+        updateSkillsDisplay();
+
+        // 更新导航栏
+        updateNavbar();
+
+        // 处理推荐表单提交
+        document.getElementById('recommend-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (skills.length === 0) {
+                showAlert('请至少添加一个技能标签', 'error');
+                return;
+            }
+
+            const userProfile = {
+                skills: skills,
+                experience: document.getElementById('experience').value,
+                education: document.getElementById('education').value,
+                preferred_city: document.getElementById('preferred_city').value,
+                preferred_industry: document.getElementById('preferred_industry').value,
+                top_n: parseInt(document.getElementById('top_n').value)
+            };
+
+            const resultsContainer = document.getElementById('results-container');
+            showLoading(resultsContainer);
+
+            try {
+                const response = await api.recommendJobs(userProfile);
+
+                if (response.count === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="card text-center">
+                            <p>未找到匹配的职位，请尝试调整筛选条件</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                resultsContainer.innerHTML = `
+                    <h2 class="text-center mb-3">为您推荐 ${response.count} 个职位</h2>
+                    <div class="grid grid-2">
+                        ${response.recommendations.map(job => `
+                            <div class="card job-card">
+                                <div class="job-header">
+                                    <div>
+                                        <h3 class="card-title" style="margin: 0;">${job.job_title}</h3>
+                                        <p class="job-company">${job.company_name}</p>
+                                    </div>
+                                    <div class="job-salary">${formatSalary(job.salary_min, job.salary_max)}</div>
+                                </div>
+
+                                <div class="job-meta">
+                                    <span class="job-meta-item">📍 ${job.city}</span>
+                                    <span class="job-meta-item">🎓 ${job.education}</span>
+                                    <span class="job-meta-item">💼 ${job.experience}</span>
+                                    <span class="job-meta-item" style="color: var(--primary-color);">
+                                        🎯 匹配度: ${(job.similarity_score * 100).toFixed(1)}%
+                                    </span>
+                                </div>
+
+                                ${job.tags && job.tags.length > 0 ? `
+                                    <div class="job-tags">
+                                        ${job.tags.slice(0, 5).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                showAlert(`成功为您推荐 ${response.count} 个职位！`, 'success');
+            } catch (error) {
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-error">
+                        推荐失败: ${error.message}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

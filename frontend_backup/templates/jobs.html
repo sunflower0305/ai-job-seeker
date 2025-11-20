@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职位列表 - 职位推荐系统</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">职位推荐系统</a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="jobs.html">职位列表</a></li>
+                <li><a href="recommend.html">智能推荐</a></li>
+                <li><a href="predict.html">薪资预测</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h1 class="text-center mb-3" style="font-size: 2rem;">职位列表</h1>
+
+        <!-- 搜索筛选栏 -->
+        <div class="search-bar">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <input
+                    type="text"
+                    id="search-input"
+                    class="form-input"
+                    placeholder="搜索职位名称或公司..."
+                    style="flex: 1;"
+                >
+                <button class="btn btn-primary" onclick="searchJobs()">搜索</button>
+                <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+            </div>
+
+            <div class="search-filters">
+                <div class="form-group" style="margin: 0;">
+                    <select id="filter-city" class="form-select" onchange="loadJobs()">
+                        <option value="">所有城市</option>
+                        <option value="北京">北京</option>
+                        <option value="上海">上海</option>
+                        <option value="广州">广州</option>
+                        <option value="深圳">深圳</option>
+                        <option value="杭州">杭州</option>
+                        <option value="成都">成都</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <select id="filter-education" class="form-select" onchange="loadJobs()">
+                        <option value="">所有学历</option>
+                        <option value="不限">不限</option>
+                        <option value="大专">大专</option>
+                        <option value="本科">本科</option>
+                        <option value="硕士">硕士</option>
+                        <option value="博士">博士</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <select id="filter-experience" class="form-select" onchange="loadJobs()">
+                        <option value="">所有经验</option>
+                        <option value="不限">不限</option>
+                        <option value="1年以下">1年以下</option>
+                        <option value="1-3年">1-3年</option>
+                        <option value="3-5年">3-5年</option>
+                        <option value="5-10年">5-10年</option>
+                        <option value="10年以上">10年以上</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <input
+                        type="number"
+                        id="filter-salary-min"
+                        class="form-input"
+                        placeholder="最低薪资"
+                        onchange="loadJobs()"
+                    >
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <input
+                        type="number"
+                        id="filter-salary-max"
+                        class="form-input"
+                        placeholder="最高薪资"
+                        onchange="loadJobs()"
+                    >
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <select id="filter-order" class="form-select" onchange="loadJobs()">
+                        <option value="-created_at">最新发布</option>
+                        <option value="-salary_max">薪资最高</option>
+                        <option value="salary_min">薪资最低</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 职位列表 -->
+        <div id="jobs-container"></div>
+
+        <!-- 分页 -->
+        <div id="pagination" class="text-center mt-3"></div>
+    </div>
+
+    <script src="../static/js/api.js"></script>
+    <script>
+        let currentPage = 1;
+
+        // 更新导航栏
+        updateNavbar();
+
+        // 加载职位列表
+        async function loadJobs(page = 1) {
+            currentPage = page;
+
+            const filters = {
+                page: currentPage,
+                search: document.getElementById('search-input').value,
+                city: document.getElementById('filter-city').value,
+                education: document.getElementById('filter-education').value,
+                experience: document.getElementById('filter-experience').value,
+                salary_min: document.getElementById('filter-salary-min').value,
+                salary_max: document.getElementById('filter-salary-max').value,
+                ordering: document.getElementById('filter-order').value
+            };
+
+            // 移除空值
+            Object.keys(filters).forEach(key => {
+                if (!filters[key]) delete filters[key];
+            });
+
+            const container = document.getElementById('jobs-container');
+            showLoading(container);
+
+            try {
+                const response = await api.getJobs(filters);
+
+                if (!response.results || response.results.length === 0) {
+                    container.innerHTML = `
+                        <div class="card text-center">
+                            <p>暂无职位数据，请尝试调整筛选条件</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div style="margin-bottom: 1rem; color: #666;">
+                        找到 ${response.count} 个职位，当前显示第 ${currentPage} 页
+                    </div>
+                    <div class="grid grid-2">
+                        ${response.results.map(job => `
+                            <div class="card job-card">
+                                <div class="job-header">
+                                    <div>
+                                        <h3 class="card-title" style="margin: 0;">${job.title}</h3>
+                                        <p class="job-company">${job.company_name}</p>
+                                    </div>
+                                    <div class="job-salary">${formatSalary(job.salary_min, job.salary_max)}</div>
+                                </div>
+
+                                <div class="job-meta">
+                                    <span class="job-meta-item">📍 ${job.city}</span>
+                                    <span class="job-meta-item">🎓 ${job.education}</span>
+                                    <span class="job-meta-item">💼 ${job.experience}</span>
+                                    <span class="job-meta-item">🏢 ${job.company_type || '-'}</span>
+                                </div>
+
+                                ${job.tags && job.tags.length > 0 ? `
+                                    <div class="job-tags">
+                                        ${job.tags.slice(0, 5).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+
+                                <div class="mt-2" style="font-size: 0.85rem; color: #999;">
+                                    ${formatDate(job.created_at)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                // 更新分页
+                renderPagination(response);
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-error">
+                        加载失败: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染分页
+        function renderPagination(response) {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(response.count / 20);
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let buttons = [];
+
+            // 上一页
+            if (currentPage > 1) {
+                buttons.push(`<button class="btn btn-outline btn-small" onclick="loadJobs(${currentPage - 1})">上一页</button>`);
+            }
+
+            // 页码
+            for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                const active = i === currentPage ? 'btn-primary' : 'btn-outline';
+                buttons.push(`<button class="btn ${active} btn-small" onclick="loadJobs(${i})">${i}</button>`);
+            }
+
+            // 下一页
+            if (currentPage < totalPages) {
+                buttons.push(`<button class="btn btn-outline btn-small" onclick="loadJobs(${currentPage + 1})">下一页</button>`);
+            }
+
+            pagination.innerHTML = `
+                <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                    ${buttons.join('')}
+                </div>
+            `;
+        }
+
+        // 搜索职位
+        function searchJobs() {
+            loadJobs(1);
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-city').value = '';
+            document.getElementById('filter-education').value = '';
+            document.getElementById('filter-experience').value = '';
+            document.getElementById('filter-salary-min').value = '';
+            document.getElementById('filter-salary-max').value = '';
+            document.getElementById('filter-order').value = '-created_at';
+            loadJobs(1);
+        }
+
+        // 页面加载时加载职位
+        loadJobs(1);
+
+        // 搜索框回车触发搜索
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchJobs();
+            }
+        });
+    </script>
+</body>
+</html>

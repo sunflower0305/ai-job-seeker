@@ -1,0 +1,224 @@
+{
+  "original_count": 500,
+  "final_count": 309,
+  "removed_count": 191,
+  "removal_rate": "38.20%",
+  "fields_count": 29,
+  "fields": [
+    "job_title",
+    "company_name",
+    "salary_min",
+    "salary_max",
+    "salary_months",
+    "city",
+    "experience",
+    "education",
+    "company_size",
+    "company_type",
+    "industry",
+    "job_description",
+    "job_tags",
+    "welfare",
+    "source",
+    "url",
+    "publish_time",
+    "crawl_time",
+    "salary_avg",
+    "salary_yearly_min",
+    "salary_yearly_max",
+    "salary_yearly_avg",
+    "skills_languages",
+    "skills_web_frameworks",
+    "skills_databases",
+    "skills_big_data",
+    "skills_ml_ai",
+    "skills_devops",
+    "skills_mobile"
+  ],
+  "field_stats": {
+    "job_title": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "company_name": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_min": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_max": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_months": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "city": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "experience": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "education": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "company_size": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "company_type": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "industry": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "job_description": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "job_tags": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "welfare": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "source": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "url": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "publish_time": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "crawl_time": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_avg": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_yearly_min": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_yearly_max": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "salary_yearly_avg": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_languages": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_web_frameworks": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_databases": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_big_data": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_ml_ai": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_devops": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    },
+    "skills_mobile": {
+      "non_null": 309,
+      "null": 0,
+      "completeness": "100.00%"
+    }
+  },
+  "city_distribution": {
+    "重庆": 42,
+    "上海": 34,
+    "北京": 33,
+    "南京": 32,
+    "成都": 32,
+    "深圳": 31,
+    "广州": 31,
+    "西安": 28,
+    "武汉": 24,
+    "杭州": 22
+  },
+  "education_distribution": {
+    "博士": 67,
+    "不限": 65,
+    "本科": 61,
+    "大专": 60,
+    "硕士": 56
+  },
+  "experience_distribution": {
+    "1-3年": 73,
+    "3-5年": 65,
+    "10年以上": 63,
+    "5-10年": 60,
+    "不限": 48
+  },
+  "source_distribution": {
+    "Boss直聘": 81,
+    "前程无忧": 79,
+    "智联招聘": 79,
+    "拉勾网": 70
+  },
+  "salary_stats": {
+    "min": 2000,
+    "max": 41000,
+    "avg_min": 10291,
+    "avg_max": 15637,
+    "median_avg": 11500
+  }
+}
