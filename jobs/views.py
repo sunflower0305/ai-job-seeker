@@ -2,11 +2,12 @@
 职位API视图
 """
 
-from django.db.models import Q
+from django.db.models import Q, Count, Avg, Min, Max
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from collections import Counter
 
 from .models import Company, Job, JobApplication, JobCollection
 from .serializers import (
@@ -81,6 +82,115 @@ class JobViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(tags__icontains=skill)
 
         return queryset
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def statistics(self, request):
+        """获取职位统计数据"""
+        jobs = Job.objects.filter(is_active=True)
+
+        # 日期筛选
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        if start_date:
+            jobs = jobs.filter(created_at__gte=start_date)
+        if end_date:
+            jobs = jobs.filter(created_at__lte=end_date)
+
+        # 基础统计
+        total_jobs = jobs.count()
+        total_companies = Company.objects.count()
+
+        # 薪资统计
+        salary_stats = jobs.aggregate(
+            avg_salary=Avg('salary_min'),
+            min_salary=Min('salary_min'),
+            max_salary=Max('salary_max')
+        )
+
+        # 按城市统计
+        city_distribution = list(
+            jobs.values('city')
+            .annotate(count=Count('id'), avg_salary=Avg('salary_min'))
+            .order_by('-count')[:10]
+        )
+
+        # 按学历统计
+        education_distribution = list(
+            jobs.values('education')
+            .annotate(count=Count('id'), avg_salary=Avg('salary_min'))
+            .order_by('-count')
+        )
+
+        # 按经验统计
+        experience_distribution = list(
+            jobs.values('experience')
+            .annotate(count=Count('id'), avg_salary=Avg('salary_min'))
+            .order_by('-count')
+        )
+
+        # 按行业统计（从公司获取）
+        industry_distribution = list(
+            jobs.values('company__industry')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:10]
+        )
+
+        # 薪资区间分布
+        salary_ranges = {
+            '0-5k': jobs.filter(salary_max__lt=5000).count(),
+            '5-10k': jobs.filter(salary_min__gte=5000, salary_max__lt=10000).count(),
+            '10-15k': jobs.filter(salary_min__gte=10000, salary_max__lt=15000).count(),
+            '15-20k': jobs.filter(salary_min__gte=15000, salary_max__lt=20000).count(),
+            '20k+': jobs.filter(salary_min__gte=20000).count(),
+        }
+
+        # 技能需求统计
+        skills_counter = Counter()
+        for job in jobs:
+            if job.tags:
+                for skill in job.tags:
+                    if skill:  # 排除空字符串
+                        skills_counter[skill] += 1
+
+        # 获取Top 20技能
+        skills_distribution = [
+            {'skill': skill, 'count': count}
+            for skill, count in skills_counter.most_common(20)
+        ]
+
+        # 公司类型分布
+        company_type_distribution = list(
+            jobs.values('company__company_type')
+            .annotate(count=Count('id'), avg_salary=Avg('salary_min'))
+            .order_by('-count')
+        )
+
+        # 公司规模分布
+        company_size_distribution = list(
+            jobs.values('company__company_size')
+            .annotate(count=Count('id'), avg_salary=Avg('salary_min'))
+            .order_by('-count')
+        )
+
+        return Response({
+            'basic_stats': {
+                'total_jobs': total_jobs,
+                'total_companies': total_companies,
+            },
+            'salary_stats': {
+                'average': round(salary_stats['avg_salary'] or 0, 2),
+                'min': salary_stats['min_salary'] or 0,
+                'max': salary_stats['max_salary'] or 0,
+            },
+            'salary_ranges': salary_ranges,
+            'city_distribution': city_distribution,
+            'education_distribution': education_distribution,
+            'experience_distribution': experience_distribution,
+            'industry_distribution': industry_distribution,
+            'skills_distribution': skills_distribution,
+            'company_type_distribution': company_type_distribution,
+            'company_size_distribution': company_size_distribution,
+        })
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def apply(self, request, pk=None):

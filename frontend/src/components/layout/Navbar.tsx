@@ -12,6 +12,7 @@ export default function Navbar() {
   const navItems = [
     { name: '首页', path: '/' },
     { name: '职位列表', path: '/jobs' },
+    { name: '数据分析', path: '/analytics' },
     { name: '智能推荐', path: '/recommendations' },
     { name: '我的收藏', path: '/collections' },
   ];

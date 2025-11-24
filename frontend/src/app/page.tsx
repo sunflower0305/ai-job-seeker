@@ -1,10 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [stats, setStats] = useState([
+    { value: '加载中...', label: '职位数量' },
+    { value: '加载中...', label: '合作企业' },
+    { value: '加载中...', label: '平均薪资' },
+    { value: '加载中...', label: '热门城市' },
+  ]);
+
+  useEffect(() => {
+    // 获取真实统计数据
+    fetch('/api/jobs/jobs/statistics/')
+      .then(res => res.json())
+      .then(data => {
+        setStats([
+          { value: data.basic_stats.total_jobs.toLocaleString(), label: '职位数量' },
+          { value: data.basic_stats.total_companies.toLocaleString(), label: '合作企业' },
+          { value: `${Math.round(data.salary_stats.average / 1000)}k`, label: '平均薪资' },
+          { value: data.city_distribution[0]?.city || '-', label: '热门城市' },
+        ]);
+      })
+      .catch(err => {
+        console.error('Failed to fetch statistics:', err);
+      });
+  }, []);
 
   const features = [
     {
@@ -31,13 +54,6 @@ export default function Home() {
       description: '多维度职位匹配系统，考虑地点、薪资、经验等多个因素，找到最适合您的工作',
       color: 'from-orange-500 to-red-500',
     },
-  ];
-
-  const stats = [
-    { value: '10,000+', label: '职位数量' },
-    { value: '5,000+', label: '合作企业' },
-    { value: '50,000+', label: '用户数量' },
-    { value: '95%', label: '匹配准确率' },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
