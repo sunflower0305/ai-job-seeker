@@ -12,6 +12,7 @@ from .views import (
     JobCollectionViewSet,
     ResumeAnalysisViewSet,
     ConversationalAssistantViewSet,
+    dashboard_screen_data,
 )
 
 router = DefaultRouter()
@@ -24,4 +25,5 @@ router.register('ai-assistant', ConversationalAssistantViewSet, basename='ai-ass
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('dashboard-screen/', dashboard_screen_data, name='dashboard-screen'),
 ]

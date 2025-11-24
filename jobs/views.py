@@ -468,3 +468,143 @@ class ConversationalAssistantViewSet(viewsets.ViewSet):
                 {'error': '会话不存在'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+# 大屏展示数据API
+from rest_framework.decorators import api_view, permission_classes
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def dashboard_screen_data(request):
+    """
+    获取数据大屏展示所需的数据
+    """
+    from django.db.models import Count, Avg, Sum
+
+    # 1. 城市职位分布（地图数据）
+    city_distribution = Job.objects.filter(is_active=True).values('city').annotate(
+        count=Count('id')
+    ).order_by('-count')[:20]
+
+    city_data = [
+        {'name': item['city'], 'value': item['count']}
+        for item in city_distribution if item['city']
+    ]
+
+    # 2. 行业分布（玫瑰图数据）
+    industry_distribution = Company.objects.values('industry').annotate(
+        count=Count('id')
+    ).order_by('-count')[:10]
+
+    industry_data = [
+        {'name': item['industry'] or '未知', 'value': item['count']}
+        for item in industry_distribution
+    ]
+
+    # 3. 薪资区间分布（柱状图数据）
+    jobs_with_salary = Job.objects.filter(
+        is_active=True,
+        salary_min__isnull=False,
+        salary_max__isnull=False
+    )
+
+    salary_ranges = [
+        {'name': '0-5k', 'min': 0, 'max': 5000},
+        {'name': '5-10k', 'min': 5000, 'max': 10000},
+        {'name': '10-15k', 'min': 10000, 'max': 15000},
+        {'name': '15-20k', 'min': 15000, 'max': 20000},
+        {'name': '20-30k', 'min': 20000, 'max': 30000},
+        {'name': '30-50k', 'min': 30000, 'max': 50000},
+        {'name': '50k+', 'min': 50000, 'max': 999999},
+    ]
+
+    salary_data = []
+    for range_item in salary_ranges:
+        count = jobs_with_salary.filter(
+            salary_min__gte=range_item['min'],
+            salary_max__lte=range_item['max']
+        ).count()
+        salary_data.append({
+            'name': range_item['name'],
+            'value': count
+        })
+
+    # 4. TOP公司招聘排行（按职位数量）
+    top_companies = Company.objects.annotate(
+        job_count=Count('jobs', filter=Q(jobs__is_active=True))
+    ).order_by('-job_count')[:10]
+
+    company_ranking = [
+        {
+            'name': company.name,
+            'value': company.job_count,
+            'industry': company.industry or '未知'
+        }
+        for company in top_companies if company.job_count > 0
+    ]
+
+    # 5. 热门技能TOP10
+    all_tags = []
+    jobs_with_tags = Job.objects.filter(is_active=True, tags__isnull=False)
+    for job in jobs_with_tags:
+        if isinstance(job.tags, list):
+            all_tags.extend(job.tags)
+        elif isinstance(job.tags, str):
+            try:
+                import json
+                tags = json.loads(job.tags)
+                if isinstance(tags, list):
+                    all_tags.extend(tags)
+            except:
+                pass
+
+    tag_counter = Counter(all_tags)
+    top_skills = [
+        {'name': tag, 'value': count}
+        for tag, count in tag_counter.most_common(10)
+    ]
+
+    # 6. 实时统计数据
+    total_stats = {
+        'total_jobs': Job.objects.filter(is_active=True).count(),
+        'total_companies': Company.objects.count(),
+        'total_applications': JobApplication.objects.count(),
+        'avg_salary': Job.objects.filter(
+            is_active=True,
+            salary_min__isnull=False,
+            salary_max__isnull=False
+        ).aggregate(
+            avg=(Avg('salary_min') + Avg('salary_max')) / 2
+        )['avg'] or 0,
+    }
+
+    # 7. 学历要求分布
+    education_distribution = Job.objects.filter(is_active=True).values('education').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    education_data = [
+        {'name': item['education'] or '不限', 'value': item['count']}
+        for item in education_distribution
+    ]
+
+    # 8. 工作经验要求分布
+    experience_distribution = Job.objects.filter(is_active=True).values('experience').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    experience_data = [
+        {'name': item['experience'] or '不限', 'value': item['count']}
+        for item in experience_distribution
+    ]
+
+    return Response({
+        'city_distribution': city_data,
+        'industry_distribution': industry_data,
+        'salary_distribution': salary_data,
+        'top_companies': company_ranking,
+        'top_skills': top_skills,
+        'statistics': total_stats,
+        'education_distribution': education_data,
+        'experience_distribution': experience_data,
+    })

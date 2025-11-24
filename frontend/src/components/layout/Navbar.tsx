@@ -50,6 +50,7 @@ export default function Navbar() {
 
   const analyticsItems = [
     { name: '数据分析概览', path: '/analytics' },
+    { name: '数据大屏', path: '/dashboard-screen' },
     { name: '薪资分析', path: '/analytics/salary' },
     { name: '技能词云', path: '/analytics/wordcloud' },
     { name: '城市分析', path: '/analytics/city' },
