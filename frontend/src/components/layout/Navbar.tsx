@@ -1,20 +1,59 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 后续集成真实登录状态
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<'user' | 'admin' | null>(null);
+  const [username, setUsername] = useState('');
+
+  // 检查登录状态
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setIsLoggedIn(true);
+        setUserRole(user.role);
+        setUsername(user.username);
+      } catch (error) {
+        console.error('解析用户信息失败:', error);
+      }
+    }
+  }, []);
+
+  // 退出登录
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setUsername('');
+    router.push('/');
+  };
 
   const navItems = [
     { name: '首页', path: '/' },
     { name: '职位列表', path: '/jobs' },
-    { name: '数据分析', path: '/analytics' },
     { name: '智能推荐', path: '/recommendations' },
+    { name: 'AI推荐', path: '/ai-recommend' },
     { name: '我的收藏', path: '/collections' },
+  ];
+
+  const analyticsItems = [
+    { name: '数据分析概览', path: '/analytics' },
+    { name: '薪资分析', path: '/analytics/salary' },
+    { name: '技能词云', path: '/analytics/wordcloud' },
+    { name: '城市分析', path: '/analytics/city' },
+    { name: '公司分析', path: '/analytics/company' },
   ];
 
   return (
@@ -49,6 +88,43 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
+              {/* 数据分析下拉菜单 */}
+              <div className="relative"
+                onMouseEnter={() => setIsAnalyticsOpen(true)}
+                onMouseLeave={() => setIsAnalyticsOpen(false)}
+              >
+                <button
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                    pathname.startsWith('/analytics')
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  数据分析
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isAnalyticsOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                    <div className="py-1">
+                      {analyticsItems.map((item) => (
+                        <Link
+                          key={item.path}
+                          href={item.path}
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            pathname === item.path
+                              ? 'bg-blue-50 text-blue-700 font-medium'
+                              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                          }`}
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -56,6 +132,22 @@ export default function Navbar() {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {isLoggedIn ? (
               <>
+                <span className="text-gray-700 text-sm">
+                  欢迎, {username}
+                  {userRole === 'admin' && (
+                    <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                      管理员
+                    </span>
+                  )}
+                </span>
+                {userRole === 'admin' && (
+                  <Link
+                    href="/admin"
+                    className="text-purple-700 hover:text-purple-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    管理后台
+                  </Link>
+                )}
                 <Link
                   href="/profile"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -63,7 +155,7 @@ export default function Navbar() {
                   个人中心
                 </Link>
                 <button
-                  onClick={() => setIsLoggedIn(false)}
+                  onClick={handleLogout}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   退出登录
@@ -138,19 +230,74 @@ export default function Navbar() {
                 {item.name}
               </Link>
             ))}
+            {/* 数据分析下拉菜单 - 移动端 */}
+            <div>
+              <button
+                onClick={() => setIsAnalyticsOpen(!isAnalyticsOpen)}
+                className={`w-full flex justify-between items-center pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname.startsWith('/analytics')
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                }`}
+              >
+                数据分析
+                <svg className={`w-5 h-5 transition-transform ${isAnalyticsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isAnalyticsOpen && (
+                <div className="bg-gray-50">
+                  {analyticsItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      className={`block pl-8 pr-4 py-2 text-sm ${
+                        pathname === item.path
+                          ? 'text-blue-700 font-medium bg-blue-50'
+                          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      }`}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsAnalyticsOpen(false);
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             {isLoggedIn ? (
               <div className="space-y-1">
+                <div className="px-4 py-2 text-base font-medium text-gray-800">
+                  {username}
+                  {userRole === 'admin' && (
+                    <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                      管理员
+                    </span>
+                  )}
+                </div>
+                {userRole === 'admin' && (
+                  <Link
+                    href="/admin"
+                    className="block px-4 py-2 text-base font-medium text-purple-700 hover:text-purple-900 hover:bg-gray-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    管理后台
+                  </Link>
+                )}
                 <Link
                   href="/profile"
                   className="block px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   个人中心
                 </Link>
                 <button
                   onClick={() => {
-                    setIsLoggedIn(false);
+                    handleLogout();
                     setIsMenuOpen(false);
                   }}
                   className="block w-full text-left px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100"

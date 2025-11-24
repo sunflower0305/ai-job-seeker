@@ -1,0 +1,117 @@
+{
+  "success": true,
+  "resume_analysis": {
+    "skills": [
+      "Python",
+      "TypeScript",
+      "JavaScript",
+      "Java",
+      "PyTorch",
+      "TensorFlow",
+      "LangChain",
+      "RAG",
+      "LLM",
+      "Prompt工程",
+      "Django",
+      "SpringBoot",
+      "React",
+      "Node.js",
+      "MySQL",
+      "PostgreSQL",
+      "Git",
+      "Docker",
+      "Linux"
+    ],
+    "experience_years": 2,
+    "education": "本科",
+    "desired_position": "AI工程师、大模型应用开发工程师",
+    "desired_salary": "15000-25000",
+    "work_experience": "张三自2021年3月起从事软件开发工作，先后担任软件工程师和AI工程师。在网翊科技主导企业知识库系统建设，应用RAG技术，负责大模型微调与Prompt工程，并开发Python自动化工具显著提升团队效率；此前在江苏绚星智慧科技参与全栈Web应用开发，涉及Django、React等技术栈，同时参与系统架构设计与数据库优化。",
+    "key_strengths": [
+      "精通AI/ML技术，尤其在RAG、大模型微调和Prompt工程方面有实践经验",
+      "具备全栈开发能力，熟悉Django、React、SpringBoot等主流框架",
+      "擅长Python自动化工具开发，能有效提升团队工作效率",
+      "具有企业级系统架构设计和数据库优化经验",
+      "技术栈全面，涵盖人工智能、Web开发、数据库及DevOps相关工具"
+    ]
+  },
+  "recommendation_validation": {
+    "passed": false,
+    "issues": [
+      "推荐结果中技能覆盖率过低: 20.0%，期望至少30%"
+    ],
+    "metrics": {
+      "skill_coverage": 0.2,
+      "has_job_mention": true,
+      "text_length": 610
+    }
+  },
+  "conversation_tests": {
+    "total": 4,
+    "passed": 3,
+    "failed": 1,
+    "pass_rate": 0.75,
+    "details": [
+      {
+        "test_case": 1,
+        "query": "请根据我的简历推荐合适的职位",
+        "passed": true,
+        "response_length": 492,
+        "keywords_found": [
+          "推荐",
+          "职位"
+        ],
+        "keywords_missing": [
+          "适合"
+        ],
+        "keyword_coverage": 0.6666666666666666,
+        "response": "目前系统遇到一些技术限制，无法从数据库和网络获取实时的职位信息。不过，基于您的优秀背景（2年经验、精通Python/AI技术栈、全栈能力），我可以为您提供专业的职业建议：\n\n1. 您的核心竞争力非常突出：同时掌握AI/ML（PyTorch, TensorFlow, RAG, LLM）和全栈开发（Django, React, SpringBoot）技能的人才在市场上非常稀缺且抢手。\n\n2. 针对您1..."
+      },
+      {
+        "test_case": 2,
+        "query": "我的期望薪资是否合理？",
+        "passed": false,
+        "response_length": 36,
+        "keywords_found": [],
+        "keywords_missing": [
+          "薪资",
+          "合理",
+          "市场"
+        ],
+        "keyword_coverage": 0.0,
+        "response": "Agent stopped due to max iterations."
+      },
+      {
+        "test_case": 3,
+        "query": "我的简历有哪些可以改进的地方？",
+        "passed": true,
+        "response_length": 1426,
+        "keywords_found": [
+          "简历",
+          "建议",
+          "优化"
+        ],
+        "keywords_missing": [
+          "改进"
+        ],
+        "keyword_coverage": 0.75,
+        "response": "目前系统在获取外部数据时遇到了一些临时限制（网络搜索请求过于频繁），但我可以基于您的背景和当前市场趋势，为您提供**精准的职位推荐方向与求职策略建议**。\n\n---\n\n### ✅ 根据您的简历，推荐的重点求职方向\n\n#### 🔍 1. **AI应用工程师 / 大模型研发工程师**\n- **匹配理由**：您精通 RAG、Prompt 工程、LangChain，且有 Python 全栈能力，非常适合从..."
+      },
+      {
+        "test_case": 4,
+        "query": "我应该学习哪些新技能？",
+        "passed": true,
+        "response_length": 1483,
+        "keywords_found": [
+          "技能",
+          "学习",
+          "提升"
+        ],
+        "keywords_missing": [],
+        "keyword_coverage": 1.0,
+        "response": "您好！我已经分析了您的简历和职业背景，您目前的技能组合非常优秀，尤其是在AI/ML、大模型应用开发和全栈开发方面具备很强的竞争力。\n\n不过，在查看当前职位市场时，我发现数据库中暂时没有完全匹配您期望（AI工程师、大模型应用开发工程师，薪资15000-25000，2年经验）的职位信息。这可能是因为：\n\n1. 当前数据库职位更新延迟\n2. 您的目标岗位竞争激烈，企业对候选人要求较高\n3. 部分新兴AI..."
+      }
+    ]
+  },
+  "overall_passed": false
+}

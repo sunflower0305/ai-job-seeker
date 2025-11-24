@@ -10,6 +10,10 @@ from .views import (
     UserProfileView,
     UserProfileDetailView,
     PasswordChangeView,
+    AdminUserManagementView,
+    AdminUserDetailView,
+    admin_statistics_view,
+    admin_analytics_view,
 )
 
 urlpatterns = [
@@ -19,4 +23,10 @@ urlpatterns = [
     path('me/', UserProfileView.as_view(), name='user-profile'),
     path('me/profile/', UserProfileDetailView.as_view(), name='user-profile-detail'),
     path('me/password/', PasswordChangeView.as_view(), name='password-change'),
+
+    # 管理员API
+    path('admin/users/', AdminUserManagementView.as_view(), name='admin-users'),
+    path('admin/users/<int:user_id>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+    path('admin/statistics/', admin_statistics_view, name='admin-statistics'),
+    path('admin/analytics/', admin_analytics_view, name='admin-analytics'),
 ]

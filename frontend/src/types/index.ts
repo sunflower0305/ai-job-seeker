@@ -2,9 +2,11 @@
 export interface Job {
   id: number;
   title: string;
-  company: string;
+  company: string | Company;
   company_id?: number;
   location: string;
+  city?: string;
+  district?: string;
   salary_min?: number;
   salary_max?: number;
   salary: string;
@@ -15,6 +17,8 @@ export interface Job {
   requirements?: string;
   responsibilities?: string;
   benefits?: string;
+  welfare?: string;
+  tags?: string[];
   created_at?: string;
   updated_at?: string;
   publish_date?: string;
@@ -27,6 +31,8 @@ export interface Company {
   name: string;
   industry?: string;
   scale?: string;
+  company_type?: string;
+  company_size?: string;
   description?: string;
   location?: string;
   website?: string;

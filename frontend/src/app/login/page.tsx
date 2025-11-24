@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
+    role: 'user', // 默认为普通用户
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,16 +20,42 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 暂时模拟登录
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:8000/api/users/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
 
-      // TODO: 集成真实API
-      // const response = await api.users.login(formData);
+      const data = await response.json();
 
-      // 模拟成功
-      router.push('/');
+      if (response.ok) {
+        // 验证用户角色是否匹配
+        if (data.user.role !== formData.role) {
+          setError(`您选择的是${formData.role === 'admin' ? '管理员' : '用户'}登录，但该账户是${data.user.role === 'admin' ? '管理员' : '用户'}账户`);
+          setLoading(false);
+          return;
+        }
+
+        // 保存token和用户信息
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // 根据角色跳转到不同页面
+        if (data.user.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
+      } else {
+        setError(data.error || '登录失败，请检查用户名和密码');
+      }
     } catch (err) {
-      setError('登录失败，请检查用户名和密码');
+      setError('登录失败，请检查网络连接');
     } finally {
       setLoading(false);
     }
@@ -82,6 +109,22 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="请输入密码"
               />
+            </div>
+
+            {/* 角色选择 */}
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                登录身份
+              </label>
+              <select
+                id="role"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'admin' })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="user">普通用户</option>
+                <option value="admin">管理员</option>
+              </select>
             </div>
 
             <div className="flex items-center justify-between">

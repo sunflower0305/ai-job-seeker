@@ -19,6 +19,7 @@ from .serializers import (
     JobCollectionSerializer,
 )
 from .wordcloud_generator import generate_colorful_wordcloud
+from .ai_analyzer import analyze_and_recommend, create_conversational_session
 
 
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -317,3 +318,153 @@ class JobCollectionViewSet(viewsets.ModelViewSet):
             serializer.data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
         )
+
+
+class ResumeAnalysisViewSet(viewsets.ViewSet):
+    """简历分析和职位推荐视图集"""
+    permission_classes = [AllowAny]  # 可以根据需要改为 IsAuthenticated
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def analyze(self, request):
+        """
+        上传简历文档，进行AI分析并推荐职位
+
+        请求参数:
+        - file: 简历文件（PDF、Word或TXT格式）
+
+        返回:
+        - success: 是否成功
+        - resume_analysis: 简历分析结果
+        - recommendation: AI推荐的职位和理由
+        """
+        # 检查是否有文件上传
+        if 'file' not in request.FILES:
+            return Response(
+                {'error': '请上传简历文件'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        uploaded_file = request.FILES['file']
+        filename = uploaded_file.name
+
+        # 验证文件类型
+        allowed_extensions = ['.pdf', '.docx', '.doc', '.txt']
+        if not any(filename.lower().endswith(ext) for ext in allowed_extensions):
+            return Response(
+                {'error': f'不支持的文件类型。支持的格式: {", ".join(allowed_extensions)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 验证文件大小（限制为10MB）
+        max_size = 10 * 1024 * 1024  # 10MB
+        if uploaded_file.size > max_size:
+            return Response(
+                {'error': '文件大小不能超过10MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # 读取文件内容
+            file_content = uploaded_file.read()
+
+            # 调用AI分析和推荐服务
+            result = analyze_and_recommend(file_content, filename)
+
+            if result.get('success'):
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'error': result.get('error', '分析失败')},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        except Exception as e:
+            return Response(
+                {'error': f'处理文件时出错: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ConversationalAssistantViewSet(viewsets.ViewSet):
+    """对话式AI助手视图集"""
+    permission_classes = [AllowAny]
+
+    # 存储会话（实际应用中应该使用缓存或数据库）
+    sessions = {}
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def chat(self, request):
+        """
+        对话接口
+
+        请求参数:
+        - message: 用户消息
+        - session_id: 会话ID（可选，如果没有则创建新会话）
+        - resume_context: 简历分析上下文（可选，首次对话时提供）
+
+        返回:
+        - success: 是否成功
+        - response: AI响应
+        - session_id: 会话ID
+        - conversation_history: 对话历史
+        """
+        message = request.data.get('message')
+        if not message:
+            return Response(
+                {'error': '请提供消息内容'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        session_id = request.data.get('session_id')
+        resume_context = request.data.get('resume_context')
+
+        # 获取或创建会话
+        if session_id and session_id in self.sessions:
+            assistant = self.sessions[session_id]
+        else:
+            import uuid
+            session_id = str(uuid.uuid4())
+            assistant = create_conversational_session()
+            self.sessions[session_id] = assistant
+
+        # 处理消息
+        try:
+            result = assistant.chat(message, resume_context=resume_context)
+            result['session_id'] = session_id
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'处理消息时出错: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def reset(self, request):
+        """
+        重置会话
+
+        请求参数:
+        - session_id: 会话ID
+
+        返回:
+        - success: 是否成功
+        - message: 提示消息
+        """
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response(
+                {'error': '请提供会话ID'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if session_id in self.sessions:
+            self.sessions[session_id].reset_conversation()
+            return Response({
+                'success': True,
+                'message': '会话已重置'
+            })
+        else:
+            return Response(
+                {'error': '会话不存在'},
+                status=status.HTTP_404_NOT_FOUND
+            )

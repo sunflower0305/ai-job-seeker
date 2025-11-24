@@ -1,14 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,7 +12,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { WordCloud, Word, Gradient, WordCloudProps } from '@isoterik/react-word-cloud';
 
 interface StatisticsData {
   basic_stats: {
@@ -32,121 +27,32 @@ interface StatisticsData {
   city_distribution: Array<{ city: string; count: number; avg_salary: number }>;
   education_distribution: Array<{ education: string; count: number; avg_salary: number }>;
   experience_distribution: Array<{ experience: string; count: number; avg_salary: number }>;
-  industry_distribution: Array<{ company__industry: string; count: number }>;
+  industry_distribution: Array<{ company__industry: string | null; count: number }>;
   skills_distribution: Array<{ skill: string; count: number }>;
-  company_type_distribution: Array<{ company__company_type: string; count: number; avg_salary: number }>;
-  company_size_distribution: Array<{ company__company_size: string; count: number; avg_salary: number }>;
+  company_type_distribution: Array<{ company__company_type: string | null; count: number; avg_salary: number }>;
+  company_size_distribution: Array<{ company__company_size: string | null; count: number; avg_salary: number }>;
 }
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D', '#8DD1E1', '#D0ED57'];
-
-// 词云渐变配置
-const wordCloudGradients: Gradient[] = [
-  {
-    id: 'gradient1',
-    type: 'linear',
-    angle: 45,
-    stops: [
-      { offset: '0%', color: '#667eea' },
-      { offset: '100%', color: '#764ba2' },
-    ],
-  },
-  {
-    id: 'gradient2',
-    type: 'linear',
-    angle: 135,
-    stops: [
-      { offset: '0%', color: '#f093fb' },
-      { offset: '100%', color: '#f5576c' },
-    ],
-  },
-  {
-    id: 'gradient3',
-    type: 'linear',
-    angle: 90,
-    stops: [
-      { offset: '0%', color: '#4facfe' },
-      { offset: '100%', color: '#00f2fe' },
-    ],
-  },
-  {
-    id: 'gradient4',
-    type: 'linear',
-    angle: 180,
-    stops: [
-      { offset: '0%', color: '#43e97b' },
-      { offset: '100%', color: '#38f9d7' },
-    ],
-  },
-  {
-    id: 'gradient5',
-    type: 'linear',
-    angle: 45,
-    stops: [
-      { offset: '0%', color: '#fa709a' },
-      { offset: '100%', color: '#fee140' },
-    ],
-  },
-];
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     fetchStatistics();
   }, []);
 
-  const fetchStatistics = async (start = startDate, end = endDate) => {
+  const fetchStatistics = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (start) params.append('start_date', start);
-      if (end) params.append('end_date', end);
-      const queryString = params.toString() ? `?${params.toString()}` : '';
-      const url = `http://localhost:8000/api/jobs/jobs/statistics/${queryString}`;
-
-      const response = await fetch(url);
+      const response = await fetch('http://localhost:8000/api/jobs/jobs/statistics/');
       if (!response.ok) throw new Error('Failed to fetch statistics');
       const result = await response.json();
       setData(result);
     } catch (err) {
       console.error('Error fetching statistics:', err);
-      setError('无法加载统计数据');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDateFilter = () => {
-    fetchStatistics(startDate, endDate);
-  };
-
-  const handleResetFilter = () => {
-    setStartDate('');
-    setEndDate('');
-    fetchStatistics('', '');
-  };
-
-  const exportToCSV = () => {
-    if (!data) return;
-
-    const csvData = [
-      ['类别', '名称', '数量', '平均薪资'],
-      ...data.city_distribution.map(item => ['城市', item.city, item.count, Math.round(item.avg_salary)]),
-      ...data.education_distribution.map(item => ['学历', item.education, item.count, Math.round(item.avg_salary)]),
-      ...data.experience_distribution.map(item => ['经验', item.experience, item.count, Math.round(item.avg_salary)]),
-    ];
-
-    const csv = csvData.map(row => row.join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `job_statistics_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
   };
 
   if (loading) {
@@ -157,11 +63,11 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (error || !data) {
+  if (!data) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 text-lg">{error || '数据加载失败'}</p>
+          <p className="text-red-600 text-lg">数据加载失败</p>
           <button
             onClick={() => fetchStatistics()}
             className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -173,113 +79,23 @@ export default function AnalyticsPage() {
     );
   }
 
-  // 转换数据格式
-  const salaryRangeData = Object.entries(data.salary_ranges).map(([range, count]) => ({
-    range,
-    count,
-  }));
-
-  const cityData = data.city_distribution.map(item => ({
+  const cityData = data.city_distribution.slice(0, 8).map(item => ({
     name: item.city,
     职位数: item.count,
-    平均薪资: Math.round(item.avg_salary),
   }));
 
-  const educationData = data.education_distribution.map(item => ({
-    name: item.education,
-    职位数: item.count,
-    平均薪资: Math.round(item.avg_salary),
-  }));
-
-  const experienceData = data.experience_distribution.map(item => ({
-    name: item.experience,
-    职位数: item.count,
-    平均薪资: Math.round(item.avg_salary),
-  }));
-
-  const industryData = data.industry_distribution.map(item => ({
-    name: item.company__industry || '未分类',
-    value: item.count,
-  }));
-
-  const skillsData = data.skills_distribution.map(item => ({
+  const skillsData = data.skills_distribution.slice(0, 10).map(item => ({
     name: item.skill,
     需求数: item.count,
-  }));
-
-  // 词云数据格式
-  const skillsWordCloudData: Word[] = data.skills_distribution.map(item => ({
-    text: item.skill,
-    value: item.count,
-  }));
-
-  const companyTypeData = data.company_type_distribution.map(item => ({
-    name: item.company__company_type || '其他',
-    职位数: item.count,
-    平均薪资: Math.round(item.avg_salary),
-  }));
-
-  const companySizeData = data.company_size_distribution.map(item => ({
-    name: item.company__company_size || '未知',
-    职位数: item.count,
-    平均薪资: Math.round(item.avg_salary),
   }));
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 标题和操作按钮 */}
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">数据统计分析</h1>
-            <p className="mt-2 text-gray-600">职位市场数据可视化与分析报告</p>
-          </div>
-          <button
-            onClick={exportToCSV}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            导出数据
-          </button>
-        </div>
-
-        {/* 日期筛选器 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">数据筛选</h2>
-          <div className="flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">开始日期</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">结束日期</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              onClick={handleDateFilter}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              应用筛选
-            </button>
-            <button
-              onClick={handleResetFilter}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              重置
-            </button>
-          </div>
+        {/* 标题 */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">数据分析概览</h1>
+          <p className="mt-2 text-gray-600">职位市场数据统计与趋势分析</p>
         </div>
 
         {/* 基础统计卡片 */}
@@ -343,99 +159,95 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* 图表区域 */}
+        {/* 分析模块导航卡片 */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">详细分析</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* 薪资分析 */}
+            <Link href="/analytics/salary" className="group">
+              <div className="bg-white rounded-lg shadow hover:shadow-xl transition-all p-6 h-full border-2 border-transparent hover:border-blue-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-yellow-100 rounded-lg p-3">
+                    <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">薪资分析</h3>
+                <p className="text-gray-600 text-sm">薪资区间、学历要求、经验与薪资关系等深度分析</p>
+              </div>
+            </Link>
+
+            {/* 技能词云 */}
+            <Link href="/analytics/wordcloud" className="group">
+              <div className="bg-white rounded-lg shadow hover:shadow-xl transition-all p-6 h-full border-2 border-transparent hover:border-blue-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-blue-100 rounded-lg p-3">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">技能词云</h3>
+                <p className="text-gray-600 text-sm">热门技能需求词云图、技能排行榜与技能分布</p>
+              </div>
+            </Link>
+
+            {/* 城市分析 */}
+            <Link href="/analytics/city" className="group">
+              <div className="bg-white rounded-lg shadow hover:shadow-xl transition-all p-6 h-full border-2 border-transparent hover:border-blue-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-green-100 rounded-lg p-3">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">城市分析</h3>
+                <p className="text-gray-600 text-sm">各城市职位分布、薪资水平与就业机会分析</p>
+              </div>
+            </Link>
+
+            {/* 公司分析 */}
+            <Link href="/analytics/company" className="group">
+              <div className="bg-white rounded-lg shadow hover:shadow-xl transition-all p-6 h-full border-2 border-transparent hover:border-blue-500">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-purple-100 rounded-lg p-3">
+                    <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">公司分析</h3>
+                <p className="text-gray-600 text-sm">企业类型、规模、行业分布与薪资水平分析</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* 快速概览图表 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 薪资区间分布 */}
+          {/* 城市职位分布预览 */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">薪资区间分布</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={salaryRangeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="range" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" fill="#3B82F6" name="职位数" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 城市职位分布 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">城市职位分布 Top 10</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={cityData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={60} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="职位数" fill="#10B981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 学历要求分布 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">学历要求与薪资</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={educationData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis yAxisId="left" orientation="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="职位数" fill="#8B5CF6" name="职位数" />
-                <Bar yAxisId="right" dataKey="平均薪资" fill="#F59E0B" name="平均薪资(元)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 工作经验与薪资 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">工作经验与薪资关系</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={experienceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis yAxisId="left" orientation="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="职位数" stroke="#3B82F6" strokeWidth={2} name="职位数" />
-                <Line yAxisId="right" type="monotone" dataKey="平均薪资" stroke="#EF4444" strokeWidth={2} name="平均薪资(元)" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 行业分布饼图 */}
-          <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">行业分布 Top 10</h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={industryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  label={({ name, percent }) => `${name} (${percent ? (percent * 100).toFixed(0) : 0}%)`}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {industryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 城市平均薪资对比 */}
-          <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">各城市平均薪资对比</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900">城市职位分布 Top 8</h2>
+              <Link href="/analytics/city" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                查看详情 →
+              </Link>
+            </div>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={cityData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -443,61 +255,27 @@ export default function AnalyticsPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="平均薪资" fill="#06B6D4" name="平均薪资(元)" />
+                <Bar dataKey="职位数" fill="#10B981" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* 技能需求词云图 */}
-          <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">技能需求词云 - Top 30</h2>
-            <p className="text-sm text-gray-600 mb-4">词语大小代表需求数量，采用椭圆形布局，核心技能在中央</p>
-            <div className="flex items-center justify-center rounded-lg overflow-hidden" style={{ minHeight: 500 }}>
-              {skillsWordCloudData.length > 0 ? (
-                <img
-                  src={`http://localhost:8000/api/jobs/jobs/wordcloud/?width=900&height=600&t=${Date.now()}`}
-                  alt="技能需求词云图"
-                  className="max-w-full h-auto"
-                  style={{ maxHeight: '600px' }}
-                />
-              ) : (
-                <div className="text-gray-500 text-center p-8">
-                  <p>暂无技能数据</p>
-                </div>
-              )}
+          {/* 热门技能预览 */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900">热门技能 Top 10</h2>
+              <Link href="/analytics/wordcloud" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                查看详情 →
+              </Link>
             </div>
-          </div>
-
-          {/* 公司类型分布 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">公司类型分布</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={companyTypeData}>
+              <BarChart data={skillsData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis yAxisId="left" orientation="left" />
-                <YAxis yAxisId="right" orientation="right" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={100} />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="left" dataKey="职位数" fill="#10B981" name="职位数" />
-                <Bar yAxisId="right" dataKey="平均薪资" fill="#F59E0B" name="平均薪资(元)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 公司规模分布 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">公司规模分布</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={companySizeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                <YAxis yAxisId="left" orientation="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="职位数" fill="#3B82F6" name="职位数" />
-                <Bar yAxisId="right" dataKey="平均薪资" fill="#EF4444" name="平均薪资(元)" />
+                <Bar dataKey="需求数" fill="#3B82F6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -505,33 +283,38 @@ export default function AnalyticsPage() {
 
         {/* 数据洞察 */}
         <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">数据洞察</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">核心数据洞察</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="border-l-4 border-blue-500 pl-4">
               <h3 className="font-semibold text-gray-900">最热门城市</h3>
               <p className="text-gray-600 mt-1">
-                {cityData[0]?.name || '-'} ({cityData[0]?.职位数 || 0}个职位)
+                {data.city_distribution[0]?.city || '-'} ({data.city_distribution[0]?.count || 0}个职位)
               </p>
             </div>
             <div className="border-l-4 border-green-500 pl-4">
               <h3 className="font-semibold text-gray-900">薪资最高城市</h3>
               <p className="text-gray-600 mt-1">
                 {(() => {
-                  const sortedCities = [...cityData].sort((a, b) => b.平均薪资 - a.平均薪资);
-                  return `${sortedCities[0]?.name || '-'} (${sortedCities[0]?.平均薪资 || 0}元)`;
+                  const sortedCities = [...data.city_distribution].sort((a, b) => b.avg_salary - a.avg_salary);
+                  return `${sortedCities[0]?.city || '-'} (${Math.round(sortedCities[0]?.avg_salary || 0)}元)`;
                 })()}
               </p>
             </div>
             <div className="border-l-4 border-purple-500 pl-4">
               <h3 className="font-semibold text-gray-900">主要行业</h3>
               <p className="text-gray-600 mt-1">
-                {industryData[0]?.name || '-'} ({industryData[0]?.value || 0}个职位)
+                {(() => {
+                  const topIndustry = data.industry_distribution
+                    .filter(item => item.company__industry)
+                    .sort((a, b) => b.count - a.count)[0];
+                  return topIndustry ? `${topIndustry.company__industry} (${topIndustry.count}个职位)` : '暂无数据';
+                })()}
               </p>
             </div>
             <div className="border-l-4 border-yellow-500 pl-4">
               <h3 className="font-semibold text-gray-900">最热门技能</h3>
               <p className="text-gray-600 mt-1">
-                {skillsData[0]?.name || '-'} ({skillsData[0]?.需求数 || 0}个职位)
+                {data.skills_distribution[0]?.skill || '-'} ({data.skills_distribution[0]?.count || 0}个职位)
               </p>
             </div>
           </div>

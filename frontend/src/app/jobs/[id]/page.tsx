@@ -12,7 +12,6 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCollected, setIsCollected] = useState(false);
-  const [isApplied, setIsApplied] = useState(false);
 
   useEffect(() => {
     fetchJobDetail();
@@ -21,43 +20,28 @@ export default function JobDetailPage() {
   const fetchJobDetail = async () => {
     try {
       setLoading(true);
-      // TODO: 集成真实API
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/`);
 
-      // 使用模拟数据
-      const mockJob: Job = {
-        id: parseInt(jobId),
-        title: 'React前端工程师',
-        company: '字节跳动',
-        location: '北京-朝阳区',
-        salary: '25k-40k',
-        salary_min: 25000,
-        salary_max: 40000,
-        experience: '3-5年',
-        education: '本科',
-        job_type: '全职',
-        description: '我们正在寻找一位富有激情的React前端工程师加入我们的团队。',
-        requirements: `1. 精通React、TypeScript、Next.js等前端技术栈
-2. 熟悉前端工程化、模块化开发
-3. 熟悉常用的前端框架和库，如Redux、MobX等
-4. 具有良好的代码习惯和团队协作精神
-5. 有大型项目开发经验者优先`,
-        responsibilities: `1. 负责公司核心产品的前端开发工作
-2. 参与产品需求讨论，提供专业的技术方案
-3. 优化前端性能，提升用户体验
-4. 编写高质量、可维护的代码
-5. 参与技术分享，提升团队整体技术水平`,
-        benefits: `1. 五险一金，补充商业保险
-2. 弹性工作时间，远程办公
-3. 15天带薪年假，节日福利
-4. 定期团建活动
-5. 完善的培训体系和晋升通道
-6. 免费三餐、下午茶、健身房
-7. 年度体检`,
-        publish_date: '2024-01-15',
-      };
+      if (response.ok) {
+        const data = await response.json();
+        setJob(data);
 
-      setJob(mockJob);
+        // 检查是否已收藏（需要登录）
+        const token = localStorage.getItem('token');
+        if (token) {
+          const collectResponse = await fetch(`http://localhost:8000/api/jobs/collections/?job=${jobId}`, {
+            headers: {
+              'Authorization': `Token ${token}`,
+            },
+          });
+          if (collectResponse.ok) {
+            const collectData = await collectResponse.json();
+            setIsCollected(collectData.results && collectData.results.length > 0);
+          }
+        }
+      } else {
+        console.error('获取职位详情失败');
+      }
     } catch (err) {
       console.error('获取职位详情失败:', err);
     } finally {
@@ -65,15 +49,37 @@ export default function JobDetailPage() {
     }
   };
 
-  const handleCollect = () => {
-    setIsCollected(!isCollected);
-    // TODO: 调用收藏API
+  const handleCollect = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('请先登录');
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const method = isCollected ? 'DELETE' : 'POST';
+      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/collect/`, {
+        method: method,
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setIsCollected(!isCollected);
+        const data = await response.json();
+        alert(data.message);
+      } else {
+        alert('操作失败，请重试');
+      }
+    } catch (error) {
+      console.error('收藏操作失败:', error);
+      alert('操作失败，请重试');
+    }
   };
 
-  const handleApply = () => {
-    setIsApplied(true);
-    // TODO: 调用投递API
-  };
 
   if (loading) {
     return (
@@ -120,83 +126,91 @@ export default function JobDetailPage() {
             <div className="bg-white rounded-lg shadow-md p-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{job.title}</h1>
               <div className="flex items-center justify-between mb-6">
-                <div className="text-3xl font-bold text-orange-600">{job.salary}</div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleCollect}
-                    className={`px-6 py-3 border rounded-lg font-medium transition-all ${
-                      isCollected
-                        ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {isCollected ? '已收藏' : '收藏'}
-                  </button>
-                  <button
-                    onClick={handleApply}
-                    disabled={isApplied}
-                    className={`px-8 py-3 rounded-lg font-medium transition-all ${
-                      isApplied
-                        ? 'bg-green-600 text-white cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
-                  >
-                    {isApplied ? '已投递' : '立即投递'}
-                  </button>
+                <div className="text-3xl font-bold text-orange-600">
+                  {job.salary_min && job.salary_max
+                    ? `${(job.salary_min / 1000).toFixed(0)}k-${(job.salary_max / 1000).toFixed(0)}k`
+                    : '薪资面议'}
                 </div>
+                <button
+                  onClick={handleCollect}
+                  className={`flex items-center gap-2 px-6 py-3 border-2 rounded-lg font-medium transition-all ${
+                    isCollected
+                      ? 'border-yellow-500 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+                      : 'border-gray-300 text-gray-700 hover:border-yellow-500 hover:bg-yellow-50'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill={isCollected ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  {isCollected ? '已收藏' : '收藏职位'}
+                </button>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">工作经验</div>
-                  <div className="font-medium text-gray-900">{job.experience}</div>
+                  <div className="font-medium text-gray-900">{job.experience || '不限'}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 mb-1">学历要求</div>
-                  <div className="font-medium text-gray-900">{job.education}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">工作类型</div>
-                  <div className="font-medium text-gray-900">{job.job_type}</div>
+                  <div className="font-medium text-gray-900">{job.education || '不限'}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 mb-1">工作地点</div>
-                  <div className="font-medium text-gray-900">{job.location}</div>
+                  <div className="font-medium text-gray-900">{job.city || job.location || '不限'}</div>
                 </div>
+                {job.district && (
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">区域</div>
+                    <div className="font-medium text-gray-900">{job.district}</div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Job Description */}
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">职位描述</h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {job.description}
-              </p>
-            </div>
+            {job.description && (
+              <div className="bg-white rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">职位描述</h2>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {job.description}
+                </p>
+              </div>
+            )}
 
             {/* Job Requirements */}
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">任职要求</h2>
-              <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {job.requirements}
+            {job.requirements && (
+              <div className="bg-white rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">任职要求</h2>
+                <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {job.requirements}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Responsibilities */}
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">岗位职责</h2>
-              <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {job.responsibilities}
+            {/* Welfare */}
+            {job.welfare && (
+              <div className="bg-white rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">福利待遇</h2>
+                <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {job.welfare}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Benefits */}
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">福利待遇</h2>
-              <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {job.benefits}
+            {/* Tags */}
+            {job.tags && job.tags.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">技能标签</h2>
+                <div className="flex flex-wrap gap-2">
+                  {job.tags.map((tag, index) => (
+                    <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -208,24 +222,33 @@ export default function JobDetailPage() {
                 <div className="space-y-4">
                   <div>
                     <div className="text-sm text-gray-600 mb-1">公司名称</div>
-                    <div className="font-medium text-gray-900">{job.company}</div>
+                    <div className="font-medium text-gray-900">
+                      {typeof job.company === 'object' ? job.company.name : job.company}
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">行业</div>
-                    <div className="font-medium text-gray-900">互联网</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">公司规模</div>
-                    <div className="font-medium text-gray-900">10000人以上</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">融资阶段</div>
-                    <div className="font-medium text-gray-900">已上市</div>
-                  </div>
+                  {job.company && typeof job.company === 'object' && (
+                    <>
+                      {job.company.industry && (
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">行业</div>
+                          <div className="font-medium text-gray-900">{job.company.industry}</div>
+                        </div>
+                      )}
+                      {job.company.company_type && (
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">公司类型</div>
+                          <div className="font-medium text-gray-900">{job.company.company_type}</div>
+                        </div>
+                      )}
+                      {job.company.company_size && (
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">公司规模</div>
+                          <div className="font-medium text-gray-900">{job.company.company_size}</div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-                <button className="mt-4 w-full py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                  查看公司主页
-                </button>
               </div>
 
               {/* Similar Jobs */}
@@ -243,17 +266,6 @@ export default function JobDetailPage() {
                     </Link>
                   ))}
                 </div>
-              </div>
-
-              {/* Tips */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">投递小贴士</h3>
-                <ul className="text-sm text-blue-800 space-y-2">
-                  <li>• 完善个人简历，提高匹配度</li>
-                  <li>• 突出相关项目经验</li>
-                  <li>• 展示技术栈与岗位的契合度</li>
-                  <li>• 及时关注投递进度</li>
-                </ul>
               </div>
             </div>
           </div>
