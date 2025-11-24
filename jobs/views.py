@@ -3,6 +3,7 @@
 """
 
 from django.db.models import Q, Count, Avg, Min, Max
+from django.http import HttpResponse
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -17,6 +18,7 @@ from .serializers import (
     JobApplicationSerializer,
     JobCollectionSerializer,
 )
+from .wordcloud_generator import generate_colorful_wordcloud
 
 
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -191,6 +193,46 @@ class JobViewSet(viewsets.ReadOnlyModelViewSet):
             'company_type_distribution': company_type_distribution,
             'company_size_distribution': company_size_distribution,
         })
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def wordcloud(self, request):
+        """生成技能词云图片"""
+        jobs = Job.objects.filter(is_active=True)
+
+        # 日期筛选
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        if start_date:
+            jobs = jobs.filter(created_at__gte=start_date)
+        if end_date:
+            jobs = jobs.filter(created_at__lte=end_date)
+
+        # 技能需求统计
+        skills_counter = Counter()
+        for job in jobs:
+            if job.tags:
+                for skill in job.tags:
+                    if skill:
+                        skills_counter[skill] += 1
+
+        # 获取Top 30技能
+        skills_data = [
+            {'skill': skill, 'count': count}
+            for skill, count in skills_counter.most_common(30)
+        ]
+
+        if not skills_data:
+            # 如果没有数据，返回默认提示
+            return HttpResponse("No skills data available", status=404)
+
+        # 生成词云图片
+        width = int(request.query_params.get('width', 900))
+        height = int(request.query_params.get('height', 600))
+
+        img_io = generate_colorful_wordcloud(skills_data, width=width, height=height)
+
+        # 返回图片
+        return HttpResponse(img_io.getvalue(), content_type='image/png')
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def apply(self, request, pk=None):

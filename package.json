@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@isoterik/react-word-cloud": "^1.3.0"
+  }
+}

@@ -16,6 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { WordCloud, Word, Gradient, WordCloudProps } from '@isoterik/react-word-cloud';
 
 interface StatisticsData {
   basic_stats: {
@@ -38,6 +39,55 @@ interface StatisticsData {
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D', '#8DD1E1', '#D0ED57'];
+
+// 词云渐变配置
+const wordCloudGradients: Gradient[] = [
+  {
+    id: 'gradient1',
+    type: 'linear',
+    angle: 45,
+    stops: [
+      { offset: '0%', color: '#667eea' },
+      { offset: '100%', color: '#764ba2' },
+    ],
+  },
+  {
+    id: 'gradient2',
+    type: 'linear',
+    angle: 135,
+    stops: [
+      { offset: '0%', color: '#f093fb' },
+      { offset: '100%', color: '#f5576c' },
+    ],
+  },
+  {
+    id: 'gradient3',
+    type: 'linear',
+    angle: 90,
+    stops: [
+      { offset: '0%', color: '#4facfe' },
+      { offset: '100%', color: '#00f2fe' },
+    ],
+  },
+  {
+    id: 'gradient4',
+    type: 'linear',
+    angle: 180,
+    stops: [
+      { offset: '0%', color: '#43e97b' },
+      { offset: '100%', color: '#38f9d7' },
+    ],
+  },
+  {
+    id: 'gradient5',
+    type: 'linear',
+    angle: 45,
+    stops: [
+      { offset: '0%', color: '#fa709a' },
+      { offset: '100%', color: '#fee140' },
+    ],
+  },
+];
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<StatisticsData | null>(null);
@@ -155,6 +205,12 @@ export default function AnalyticsPage() {
   const skillsData = data.skills_distribution.map(item => ({
     name: item.skill,
     需求数: item.count,
+  }));
+
+  // 词云数据格式
+  const skillsWordCloudData: Word[] = data.skills_distribution.map(item => ({
+    text: item.skill,
+    value: item.count,
   }));
 
   const companyTypeData = data.company_type_distribution.map(item => ({
@@ -392,19 +448,24 @@ export default function AnalyticsPage() {
             </ResponsiveContainer>
           </div>
 
-          {/* 技能需求统计 Top 20 */}
+          {/* 技能需求词云图 */}
           <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">技能需求 Top 20</h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={skillsData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="需求数" fill="#8B5CF6" />
-              </BarChart>
-            </ResponsiveContainer>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">技能需求词云 - Top 30</h2>
+            <p className="text-sm text-gray-600 mb-4">词语大小代表需求数量，采用椭圆形布局，核心技能在中央</p>
+            <div className="flex items-center justify-center rounded-lg overflow-hidden" style={{ minHeight: 500 }}>
+              {skillsWordCloudData.length > 0 ? (
+                <img
+                  src={`http://localhost:8000/api/jobs/jobs/wordcloud/?width=900&height=600&t=${Date.now()}`}
+                  alt="技能需求词云图"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '600px' }}
+                />
+              ) : (
+                <div className="text-gray-500 text-center p-8">
+                  <p>暂无技能数据</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 公司类型分布 */}
