@@ -12,9 +12,12 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCollected, setIsCollected] = useState(false);
+  const [similarJobs, setSimilarJobs] = useState<Job[]>([]);
+  const [similarJobsLoading, setSimilarJobsLoading] = useState(false);
 
   useEffect(() => {
     fetchJobDetail();
+    fetchSimilarJobs();
   }, [jobId]);
 
   const fetchJobDetail = async () => {
@@ -46,6 +49,24 @@ export default function JobDetailPage() {
       console.error('获取职位详情失败:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSimilarJobs = async () => {
+    try {
+      setSimilarJobsLoading(true);
+      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/similar/?top_n=3`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setSimilarJobs(data.results || []);
+      } else {
+        console.error('获取相似职位失败');
+      }
+    } catch (err) {
+      console.error('获取相似职位失败:', err);
+    } finally {
+      setSimilarJobsLoading(false);
     }
   };
 
@@ -254,18 +275,32 @@ export default function JobDetailPage() {
               {/* Similar Jobs */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">相似职位</h3>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <Link
-                      key={i}
-                      href={`/jobs/${parseInt(jobId) + i}`}
-                      className="block p-3 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all"
-                    >
-                      <h4 className="font-medium text-gray-900 mb-1">前端开发工程师</h4>
-                      <p className="text-sm text-gray-600">腾讯 · 20k-35k</p>
-                    </Link>
-                  ))}
-                </div>
+                {similarJobsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : similarJobs.length > 0 ? (
+                  <div className="space-y-4">
+                    {similarJobs.map((similarJob) => (
+                      <Link
+                        key={similarJob.id}
+                        href={`/jobs/${similarJob.id}`}
+                        className="block p-3 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all"
+                      >
+                        <h4 className="font-medium text-gray-900 mb-1">{similarJob.title}</h4>
+                        <p className="text-sm text-gray-600">
+                          {typeof similarJob.company === 'object' ? similarJob.company.name : similarJob.company}
+                          {' · '}
+                          {similarJob.salary_min && similarJob.salary_max
+                            ? `${(similarJob.salary_min / 1000).toFixed(0)}k-${(similarJob.salary_max / 1000).toFixed(0)}k`
+                            : '薪资面议'}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">暂无相似职位</p>
+                )}
               </div>
             </div>
           </div>

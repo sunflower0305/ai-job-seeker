@@ -20,6 +20,7 @@ from .serializers import (
 )
 from .wordcloud_generator import generate_colorful_wordcloud
 from .ai_analyzer import analyze_and_recommend, create_conversational_session
+from .pagination import CustomPageNumberPagination
 
 
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,6 +37,7 @@ class JobViewSet(viewsets.ReadOnlyModelViewSet):
     """职位视图集"""
     queryset = Job.objects.filter(is_active=True).select_related('company')
     permission_classes = [AllowAny]
+    pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'company__name', 'description']
     ordering_fields = ['salary_min', 'salary_max', 'created_at', 'publish_date']
@@ -279,6 +281,114 @@ class JobViewSet(viewsets.ReadOnlyModelViewSet):
                 return Response({'message': '取消收藏成功'})
             return Response({'message': '未收藏'})
 
+    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
+    def similar(self, request, pk=None):
+        """获取相似职位"""
+        job = self.get_object()
+        top_n = int(request.query_params.get('top_n', 3))
+
+        try:
+            # 导入推荐器
+            from recommendations.views import get_recommender
+
+            recommender = get_recommender()
+            if recommender is None or recommender.tfidf_matrix is None:
+                # 如果模型未加载，返回基于同公司或同技能的简单推荐
+                similar_jobs = Job.objects.filter(
+                    is_active=True
+                ).exclude(id=job.id).select_related('company')[:top_n]
+
+                serializer = JobListSerializer(similar_jobs, many=True)
+                return Response({
+                    'count': len(serializer.data),
+                    'results': serializer.data,
+                    'method': 'simple'
+                })
+
+            # 使用ML模型推荐相似职位
+            try:
+                # 注意：recommender使用DataFrame的index作为job_id
+                # 需要从DataFrame中查找对应的记录
+                if int(pk) in recommender.df.index:
+                    recommendations = recommender.recommend_by_job_id(
+                        int(pk),
+                        top_n=top_n,
+                        return_scores=True
+                    )
+
+                    # 获取推荐的职位详情
+                    job_ids = [rec['job_id'] for rec in recommendations]
+                    similar_jobs = Job.objects.filter(
+                        id__in=job_ids,
+                        is_active=True
+                    ).select_related('company')
+
+                    # 创建ID到职位的映射
+                    job_map = {job.id: job for job in similar_jobs}
+
+                    # 按推荐顺序组织结果
+                    results = []
+                    for rec in recommendations:
+                        job_obj = job_map.get(rec['job_id'])
+                        if job_obj:
+                            job_data = JobListSerializer(job_obj).data
+                            job_data['similarity_score'] = round(rec['similarity_score'], 3)
+                            results.append(job_data)
+
+                    return Response({
+                        'count': len(results),
+                        'results': results,
+                        'method': 'ml'
+                    })
+                else:
+                    # 如果当前职位不在训练数据中，使用简单推荐
+                    similar_jobs = Job.objects.filter(
+                        is_active=True,
+                        company=job.company
+                    ).exclude(id=job.id).select_related('company')[:top_n]
+
+                    if similar_jobs.count() < top_n:
+                        # 如果同公司职位不够，补充同行业的职位
+                        remaining = top_n - similar_jobs.count()
+                        additional_jobs = Job.objects.filter(
+                            is_active=True,
+                            company__industry=job.company.industry
+                        ).exclude(
+                            id__in=[j.id for j in similar_jobs]
+                        ).exclude(id=job.id).select_related('company')[:remaining]
+
+                        similar_jobs = list(similar_jobs) + list(additional_jobs)
+
+                    serializer = JobListSerializer(similar_jobs, many=True)
+                    return Response({
+                        'count': len(serializer.data),
+                        'results': serializer.data,
+                        'method': 'simple'
+                    })
+
+            except Exception as e:
+                # ML推荐失败，使用简单推荐
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"ML推荐失败: {e}")
+
+                similar_jobs = Job.objects.filter(
+                    is_active=True
+                ).exclude(id=job.id).select_related('company')[:top_n]
+
+                serializer = JobListSerializer(similar_jobs, many=True)
+                return Response({
+                    'count': len(serializer.data),
+                    'results': serializer.data,
+                    'method': 'fallback'
+                })
+
+        except Exception as e:
+            return Response(
+                {'error': f'获取相似职位失败: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class JobApplicationViewSet(viewsets.ModelViewSet):
     """职位申请视图集"""
@@ -520,10 +630,27 @@ def dashboard_screen_data(request):
 
     salary_data = []
     for range_item in salary_ranges:
-        count = jobs_with_salary.filter(
-            salary_min__gte=range_item['min'],
-            salary_max__lte=range_item['max']
-        ).count()
+        # 使用薪资中位数来判断职位属于哪个区间
+        # 中位数 = (salary_min + salary_max) / 2
+        if range_item['name'] == '50k+':
+            # 对于50k+，只要最小薪资>=50k即可
+            count = jobs_with_salary.filter(
+                salary_min__gte=range_item['min']
+            ).count()
+        else:
+            # 计算中位数，判断是否在区间内
+            from django.db.models import F, ExpressionWrapper, FloatField
+
+            count = jobs_with_salary.annotate(
+                avg_salary=ExpressionWrapper(
+                    (F('salary_min') + F('salary_max')) / 2.0,
+                    output_field=FloatField()
+                )
+            ).filter(
+                avg_salary__gte=range_item['min'],
+                avg_salary__lt=range_item['max']
+            ).count()
+
         salary_data.append({
             'name': range_item['name'],
             'value': count

@@ -43,7 +43,7 @@ export default function Navbar() {
   const navItems = [
     { name: '首页', path: '/' },
     { name: '职位列表', path: '/jobs' },
-    { name: '智能推荐', path: '/recommendations' },
+    { name: '薪资预测', path: '/recommendations' },
     { name: 'AI推荐', path: '/ai-recommend' },
     { name: '我的收藏', path: '/collections' },
   ];
@@ -90,13 +90,13 @@ export default function Navbar() {
                 </Link>
               ))}
               {/* 数据分析下拉菜单 */}
-              <div className="relative"
+              <div className="relative inline-flex items-center"
                 onMouseEnter={() => setIsAnalyticsOpen(true)}
                 onMouseLeave={() => setIsAnalyticsOpen(false)}
               >
                 <button
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                    pathname.startsWith('/analytics')
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors h-16 ${
+                    pathname.startsWith('/analytics') || pathname.startsWith('/dashboard-screen')
                       ? 'border-blue-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
@@ -107,7 +107,7 @@ export default function Navbar() {
                   </svg>
                 </button>
                 {isAnalyticsOpen && (
-                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="absolute left-0 top-full mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
                       {analyticsItems.map((item) => (
                         <Link

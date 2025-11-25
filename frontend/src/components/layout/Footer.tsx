@@ -22,7 +22,7 @@ export default function Footer() {
               </li>
               <li>
                 <a href="/recommendations" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  智能推荐
+                  薪资预测
                 </a>
               </li>
               <li>

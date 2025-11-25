@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 
@@ -26,6 +26,7 @@ export default function DashboardScreen() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mapRegistered, setMapRegistered] = useState(false);
   const scrollIndexRef = useRef(0);
+  const mapInstanceRef = useRef<any>(null);
 
   // 注册中国地图
   useEffect(() => {
@@ -73,89 +74,80 @@ export default function DashboardScreen() {
     };
   }, []);
 
-  // 城市职位分布地图配置
-  const getChinaMapOption = () => {
+  // 使用 useMemo 缓存地图配置 - 显示城市分布
+  const getChinaMapOption = useMemo(() => {
     if (!data || !mapRegistered) return {};
 
-    // 处理城市数据，添加省份映射
-    const cityToProvince: { [key: string]: string } = {
-      '北京': '北京市',
-      '上海': '上海市',
-      '天津': '天津市',
-      '重庆': '重庆市',
-      '深圳': '广东省',
-      '广州': '广东省',
-      '杭州': '浙江省',
-      '南京': '江苏省',
-      '苏州': '江苏省',
-      '成都': '四川省',
-      '武汉': '湖北省',
-      '西安': '陕西省',
-      '郑州': '河南省',
-      '长沙': '湖南省',
-      '青岛': '山东省',
-      '济南': '山东省',
-      '大连': '辽宁省',
-      '沈阳': '辽宁省',
-      '福州': '福建省',
-      '厦门': '福建省',
-      '合肥': '安徽省',
-      '南昌': '江西省',
-      '南宁': '广西壮族自治区',
-      '昆明': '云南省',
-      '贵阳': '贵州省',
-      '石家庄': '河北省',
-      '太原': '山西省',
-      '哈尔滨': '黑龙江省',
-      '长春': '吉林省',
-      '兰州': '甘肃省',
-      '乌鲁木齐': '新疆维吾尔自治区',
-      '银川': '宁夏回族自治区',
-      '西宁': '青海省',
-      '海口': '海南省',
-      '拉萨': '西藏自治区',
-      '呼和浩特': '内蒙古自治区',
+    // 城市坐标映射（主要城市的经纬度）
+    const cityCoordinates: { [key: string]: [number, number] } = {
+      '北京': [116.4074, 39.9042],
+      '上海': [121.4737, 31.2304],
+      '天津': [117.2010, 39.0842],
+      '重庆': [106.5516, 29.5630],
+      '深圳': [114.0579, 22.5431],
+      '广州': [113.2644, 23.1291],
+      '杭州': [120.1551, 30.2741],
+      '南京': [118.7969, 32.0603],
+      '苏州': [120.5954, 31.2989],
+      '成都': [104.0665, 30.5723],
+      '武汉': [114.3054, 30.5931],
+      '西安': [108.9398, 34.3416],
+      '郑州': [113.6254, 34.7466],
+      '长沙': [112.9388, 28.2282],
+      '青岛': [120.3826, 36.0671],
+      '济南': [117.1205, 36.6519],
+      '大连': [121.6147, 38.9140],
+      '沈阳': [123.4328, 41.8045],
+      '福州': [119.2965, 26.0745],
+      '厦门': [118.0894, 24.4798],
+      '合肥': [117.2272, 31.8206],
+      '南昌': [115.8581, 28.6832],
+      '南宁': [108.3661, 22.8172],
+      '昆明': [102.8329, 24.8801],
+      '贵阳': [106.7135, 26.5783],
+      '石家庄': [114.5149, 38.0428],
+      '太原': [112.5489, 37.8706],
+      '哈尔滨': [126.5348, 45.8038],
+      '长春': [125.3245, 43.8171],
+      '兰州': [103.8343, 36.0611],
+      '乌鲁木齐': [87.6168, 43.8256],
+      '银川': [106.2586, 38.4680],
+      '西宁': [101.7782, 36.6171],
+      '海口': [110.3312, 20.0311],
+      '拉萨': [91.1320, 29.6625],
+      '呼和浩特': [111.6708, 40.8183],
     };
 
-    // 聚合省份数据
-    const provinceData: { [key: string]: number } = {};
-    data.city_distribution.forEach(city => {
-      const province = cityToProvince[city.name] || city.name;
-      provinceData[province] = (provinceData[province] || 0) + city.value;
-    });
+    // 准备散点数据
+    const scatterData = data.city_distribution
+      .filter(city => cityCoordinates[city.name])
+      .map(city => ({
+        name: city.name,
+        value: [...cityCoordinates[city.name], city.value],
+      }));
 
-    const mapData = Object.entries(provinceData).map(([name, value]) => ({
-      name,
-      value,
-    }));
-
-    // 获取最大值和最小值用于视觉映射
-    const values = mapData.map(item => item.value);
-    const maxValue = Math.max(...values);
-    const minValue = Math.min(...values);
-
-    console.log('地图数据:', mapData);
-    console.log('最大值:', maxValue, '最小值:', minValue);
+    // 获取最大值用于散点大小映射
+    const maxValue = Math.max(...data.city_distribution.map(item => item.value), 1);
 
     return {
       backgroundColor: 'transparent',
       title: {
-        text: '全国职位分布地图',
+        text: '全国职位分布地图（城市）',
         left: 'center',
         top: 10,
         textStyle: {
           color: '#fff',
-          fontSize: 20,
+          fontSize: 22,
           fontWeight: 'bold',
         },
       },
       tooltip: {
         trigger: 'item',
         formatter: function(params: any) {
-          if (params.value) {
-            return `${params.name}<br/>职位数量: ${params.value}`;
+          if (params.seriesType === 'scatter') {
+            return `${params.name}<br/>职位数量: ${params.value[2]}`;
           }
-          return `${params.name}<br/>暂无数据`;
+          return params.name;
         },
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         borderColor: '#4a90e2',
@@ -171,53 +163,95 @@ export default function DashboardScreen() {
         realtime: true,
         calculable: true,
         inRange: {
-          // 使用更明显的颜色渐变：浅黄色 -> 橙色 -> 红色
+          symbolSize: [10, 50], // 散点大小范围
           color: ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'],
         },
         textStyle: {
           color: '#fff',
         },
         left: 'left',
-        bottom: '10%',
+        bottom: '8%',
+      },
+      geo: {
+        map: 'china',
+        roam: true,
+        zoom: 1.2, // 放大地图
+        itemStyle: {
+          areaColor: '#1e3a8a',
+          borderColor: '#4a5568',
+          borderWidth: 1,
+        },
+        emphasis: {
+          itemStyle: {
+            areaColor: '#2563eb',
+          },
+        },
+        label: {
+          show: false, // 隐藏省份标签，突出城市
+        },
       },
       series: [
         {
           name: '职位数量',
-          type: 'map',
-          map: 'china',
-          roam: true,
-          emphasis: {
-            label: {
-              show: true,
-              color: '#fff',
-              fontSize: 12,
-              fontWeight: 'bold',
-            },
-            itemStyle: {
-              areaColor: '#ffd700',
-              borderColor: '#fff',
-              borderWidth: 2,
-              shadowBlur: 10,
-              shadowColor: 'rgba(255, 215, 0, 0.5)',
-            },
-          },
-          itemStyle: {
-            // 移除固定颜色，让visualMap生效
-            borderColor: '#2d3748',
-            borderWidth: 1.5,
-            shadowBlur: 3,
-            shadowColor: 'rgba(0, 0, 0, 0.3)',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: scatterData,
+          symbolSize: function (val: any) {
+            // 根据职位数量动态调整散点大小
+            return Math.sqrt(val[2]) * 3 + 8;
           },
           label: {
             show: true,
+            formatter: '{b}',
+            position: 'right',
             color: '#fff',
-            fontSize: 9,
+            fontSize: 11,
+            fontWeight: 'bold',
+            textShadowColor: '#000',
+            textShadowBlur: 3,
           },
-          data: mapData,
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(255, 178, 72, 0.5)',
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: 14,
+            },
+            itemStyle: {
+              borderColor: '#fff',
+              borderWidth: 2,
+            },
+          },
+        },
+        {
+          name: '涟漪效果',
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          data: scatterData.slice(0, 5), // 只对TOP5城市添加动画效果
+          symbolSize: function (val: any) {
+            return Math.sqrt(val[2]) * 3 + 8;
+          },
+          showEffectOn: 'render',
+          rippleEffect: {
+            brushType: 'stroke',
+            scale: 3,
+            period: 4,
+          },
+          label: {
+            show: false,
+          },
+          itemStyle: {
+            color: '#ffd700',
+            shadowBlur: 10,
+            shadowColor: '#ffd700',
+          },
+          zlevel: 1,
         },
       ],
     };
-  };
+  }, [data, mapRegistered]);
 
   // 行业分布玫瑰图配置
   const getRoseChartOption = () => {
@@ -379,7 +413,7 @@ export default function DashboardScreen() {
         {
           name: '学历要求',
           type: 'pie',
-          radius: ['40%', '60%'],
+          radius: '60%',
           center: ['40%', '55%'],
           avoidLabelOverlap: false,
           itemStyle: {
@@ -433,15 +467,12 @@ export default function DashboardScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-4">
       {/* 顶部标题栏 */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-2 h-12 bg-blue-500 rounded"></div>
-            <h1 className="text-4xl font-bold text-white">智能招聘数据大屏</h1>
-          </div>
-          <div className="text-white text-xl font-mono">
+      <div className="mb-3">
+        <div className="flex items-center justify-center relative">
+          <h1 className="text-4xl font-bold text-white">智能招聘数据大屏</h1>
+          <div className="absolute right-0 text-white text-xl font-mono">
             {currentTime.toLocaleString('zh-CN', {
               year: 'numeric',
               month: '2-digit',
@@ -454,110 +485,121 @@ export default function DashboardScreen() {
         </div>
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-4 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 shadow-xl">
-          <div className="text-blue-200 text-sm mb-2">总职位数</div>
-          <div className="text-white text-4xl font-bold">{data.statistics.total_jobs.toLocaleString()}</div>
-          <div className="text-blue-300 text-xs mt-2">↑ 实时更新</div>
-        </div>
-        <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-6 shadow-xl">
-          <div className="text-green-200 text-sm mb-2">合作企业</div>
-          <div className="text-white text-4xl font-bold">{data.statistics.total_companies.toLocaleString()}</div>
-          <div className="text-green-300 text-xs mt-2">↑ 持续增长</div>
-        </div>
-        <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-6 shadow-xl">
-          <div className="text-purple-200 text-sm mb-2">简历投递</div>
-          <div className="text-white text-4xl font-bold">{data.statistics.total_applications.toLocaleString()}</div>
-          <div className="text-purple-300 text-xs mt-2">↑ 火热进行</div>
-        </div>
-        <div className="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-6 shadow-xl">
-          <div className="text-orange-200 text-sm mb-2">平均薪资</div>
-          <div className="text-white text-4xl font-bold">{(data.statistics.avg_salary / 1000).toFixed(1)}k</div>
-          <div className="text-orange-300 text-xs mt-2">↑ 薪资水平</div>
-        </div>
-      </div>
+      {/* 主要图表区域 - 新布局 */}
+      <div className="grid grid-cols-4 gap-4 mb-3">
+        {/* 左侧列 - 玫瑰图和学历分布 */}
+        <div className="space-y-4">
+          {/* 行业分布玫瑰图 */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-3">
+            <ReactECharts option={getRoseChartOption()} style={{ height: '220px' }} />
+          </div>
 
-      {/* 图表区域 */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
-        {/* 左侧 - 行业分布玫瑰图 */}
-        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-4">
-          <ReactECharts option={getRoseChartOption()} style={{ height: '400px' }} />
+          {/* 学历要求分布 */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-3">
+            <ReactECharts option={getEducationPieOption()} style={{ height: '220px' }} />
+          </div>
         </div>
 
-        {/* 中间 - 中国地图 */}
-        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-4">
+        {/* 中间大地图 - 占2列 */}
+        <div className="col-span-2 bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-3">
           <ReactECharts
-            option={getChinaMapOption()}
-            style={{ height: '400px' }}
+            option={getChinaMapOption}
+            style={{ height: '464px' }}
             notMerge={true}
             lazyUpdate={true}
+            opts={{ renderer: 'canvas' }}
+            onChartReady={(instance) => {
+              mapInstanceRef.current = instance;
+            }}
           />
         </div>
 
-        {/* 右侧 - 学历要求分布 */}
-        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-4">
-          <ReactECharts option={getEducationPieOption()} style={{ height: '400px' }} />
+        {/* 右侧列 - 薪资分布 */}
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-3">
+          <ReactECharts option={getSalaryBarOption()} style={{ height: '464px' }} />
         </div>
       </div>
 
-      {/* 下方区域 */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* 薪资分布滚动柱状图 */}
+      {/* 下方排行榜区域 */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* TOP公司排行榜 - 自动滚动 */}
         <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-4">
-          <ReactECharts option={getSalaryBarOption()} style={{ height: '350px' }} />
-        </div>
-
-        {/* TOP公司排行榜 */}
-        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-6">
           <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
             <span className="text-yellow-500">🏆</span> TOP公司招聘排行
           </h3>
-          <div className="space-y-3">
-            {data.top_companies.slice(0, 8).map((company, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-700 bg-opacity-50 rounded-lg p-3">
-                <div className="flex items-center gap-3 flex-1">
-                  <span className={`text-lg font-bold ${
-                    index === 0 ? 'text-yellow-400' :
-                    index === 1 ? 'text-gray-300' :
-                    index === 2 ? 'text-orange-400' : 'text-blue-400'
-                  }`}>
-                    {index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-white font-medium truncate">{company.name}</div>
-                    <div className="text-gray-400 text-xs">{company.industry}</div>
+          <div className="h-[200px] overflow-hidden relative">
+            <div
+              className="space-y-3 animate-scroll-up"
+              style={{
+                animation: 'scrollUp 20s linear infinite',
+              }}
+            >
+              {/* 复制两份数据实现无缝滚动 */}
+              {[...data.top_companies, ...data.top_companies].map((company, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-700 bg-opacity-50 rounded-lg p-3">
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className={`text-lg font-bold ${
+                      (index % data.top_companies.length) === 0 ? 'text-yellow-400' :
+                      (index % data.top_companies.length) === 1 ? 'text-gray-300' :
+                      (index % data.top_companies.length) === 2 ? 'text-orange-400' : 'text-blue-400'
+                    }`}>
+                      {(index % data.top_companies.length) + 1}
+                    </span>
+                    <div className="flex-1">
+                      <div className="text-white font-medium truncate">{company.name}</div>
+                      <div className="text-gray-400 text-xs">{company.industry}</div>
+                    </div>
                   </div>
+                  <span className="text-green-400 font-bold text-lg">{company.value}</span>
                 </div>
-                <span className="text-green-400 font-bold text-lg">{company.value}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* 热门技能TOP */}
-        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-6">
+        {/* 热门技能TOP - 自动滚动 */}
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur rounded-lg shadow-xl p-4">
           <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
             <span className="text-blue-500">🔥</span> 热门技能TOP10
           </h3>
-          <div className="space-y-2">
-            {data.top_skills.map((skill, index) => (
-              <div key={index} className="bg-gray-700 bg-opacity-50 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-white font-medium">{skill.name}</span>
-                  <span className="text-blue-400 font-bold">{skill.value}</span>
+          <div className="h-[200px] overflow-hidden relative">
+            <div
+              className="space-y-2 animate-scroll-up"
+              style={{
+                animation: 'scrollUp 25s linear infinite',
+              }}
+            >
+              {/* 复制两份数据实现无缝滚动 */}
+              {[...data.top_skills, ...data.top_skills].map((skill, index) => (
+                <div key={index} className="bg-gray-700 bg-opacity-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-medium">{skill.name}</span>
+                    <span className="text-blue-400 font-bold">{skill.value}</span>
+                  </div>
+                  <div className="w-full bg-gray-600 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${(skill.value / data.top_skills[0].value) * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(skill.value / data.top_skills[0].value) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* CSS动画 */}
+      <style jsx>{`
+        @keyframes scrollUp {
+          0% {
+            transform: translateY(0);
+          }
+          100% {
+            transform: translateY(-50%);
+          }
+        }
+      `}</style>
     </div>
   );
 }

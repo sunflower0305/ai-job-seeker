@@ -45,28 +45,59 @@ def import_jobs_from_json(json_file):
                 defaults={
                     'industry': job_data.get('industry', ''),
                     'scale': job_data.get('company_size', ''),
+                    'company_type': job_data.get('company_type', ''),
                     'description': f"{company_name}是一家优秀的企业",
                 }
             )
             if created:
                 created_companies += 1
 
+            # 处理职位标题和城市
+            job_title = job_data.get('job_title', '').strip()
+            # 移除职位标题中的城市信息（如果有）
+            if '\n' in job_title:
+                job_title = job_title.split('\n')[0].strip()
+
+            city = job_data.get('city', '').strip()
+
+            # 提取技能标签
+            tags = []
+            job_tags = job_data.get('job_tags', '')
+            if job_tags:
+                if isinstance(job_tags, str):
+                    tags = [tag.strip() for tag in job_tags.split(',') if tag.strip()]
+                elif isinstance(job_tags, list):
+                    tags = job_tags
+
+            # 额外从技能分类中提取
+            for skill_category in ['skills_languages', 'skills_web_frameworks', 'skills_databases',
+                                   'skills_big_data', 'skills_ml_ai', 'skills_devops', 'skills_mobile']:
+                skills = job_data.get(skill_category, '')
+                if skills:
+                    category_tags = [tag.strip() for tag in skills.split(',') if tag.strip()]
+                    tags.extend(category_tags)
+
+            # 去重
+            tags = list(set(tags))
+
             # 创建职位
             job, created = Job.objects.get_or_create(
-                title=job_data.get('job_title', ''),
+                title=job_title,
                 company=company,
-                location=job_data.get('city', '') + '-' + job_data.get('district', ''),
+                city=city,
                 defaults={
-                    'salary_min': job_data.get('salary_min', 0),
-                    'salary_max': job_data.get('salary_max', 0),
-                    'experience': job_data.get('experience', ''),
-                    'education': job_data.get('education', ''),
+                    'salary_min': int(job_data.get('salary_min', 0) or 0),
+                    'salary_max': int(job_data.get('salary_max', 0) or 0),
+                    'experience': job_data.get('experience', '不限'),
+                    'education': job_data.get('education', '不限'),
                     'job_type': job_data.get('job_type', '全职'),
                     'description': job_data.get('job_description', ''),
-                    'requirements': job_data.get('job_requirements', ''),
-                    'responsibilities': job_data.get('job_responsibilities', ''),
-                    'benefits': '五险一金、带薪年假、定期体检、员工培训',
+                    'requirements': '',
+                    'responsibilities': '',
+                    'benefits': job_data.get('welfare', '五险一金、带薪年假'),
                     'url': job_data.get('url', ''),
+                    'tags': tags,
+                    'is_active': True,
                 }
             )
 
@@ -79,6 +110,8 @@ def import_jobs_from_json(json_file):
 
         except Exception as e:
             print(f"导入第 {i} 条数据时出错: {e}")
+            import traceback
+            traceback.print_exc()
             continue
 
     # 打印统计信息

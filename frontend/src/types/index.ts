@@ -2,16 +2,19 @@
 export interface Job {
   id: number;
   title: string;
-  company: string | Company;
+  company?: string | Company; // 详情页使用Company对象
+  company_name?: string; // 列表页使用字符串
   company_id?: number;
-  location: string;
+  company_type?: string;
+  industry?: string;
+  location?: string;
   city?: string;
   district?: string;
   salary_min?: number;
   salary_max?: number;
-  salary: string;
-  experience: string;
-  education: string;
+  salary?: string;
+  experience?: string;
+  education?: string;
   job_type?: string;
   description?: string;
   requirements?: string;
@@ -23,6 +26,8 @@ export interface Job {
   updated_at?: string;
   publish_date?: string;
   url?: string;
+  source?: string;
+  source_url?: string;
 }
 
 // 公司类型

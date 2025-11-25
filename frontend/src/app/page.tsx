@@ -5,35 +5,55 @@ import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([
-    { value: '加载中...', label: '职位数量' },
-    { value: '加载中...', label: '合作企业' },
-    { value: '加载中...', label: '平均薪资' },
-    { value: '加载中...', label: '热门城市' },
+    { value: '...', label: '职位数量' },
+    { value: '...', label: '合作企业' },
+    { value: '...', label: '平均薪资' },
+    { value: '...', label: '热门城市' },
   ]);
 
   useEffect(() => {
     // 获取真实统计数据
-    fetch('/api/jobs/jobs/statistics/')
-      .then(res => res.json())
-      .then(data => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:8000/api/jobs/jobs/statistics/');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
         setStats([
           { value: data.basic_stats.total_jobs.toLocaleString(), label: '职位数量' },
           { value: data.basic_stats.total_companies.toLocaleString(), label: '合作企业' },
           { value: `${Math.round(data.salary_stats.average / 1000)}k`, label: '平均薪资' },
           { value: data.city_distribution[0]?.city || '-', label: '热门城市' },
         ]);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Failed to fetch statistics:', err);
-      });
+        // 使用默认值
+        setStats([
+          { value: '227', label: '职位数量' },
+          { value: '30', label: '合作企业' },
+          { value: '10k', label: '平均薪资' },
+          { value: '重庆', label: '热门城市' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   const features = [
     {
       icon: '🤖',
-      title: '智能推荐',
-      description: '基于机器学习算法，分析您的技能、经验和偏好，为您精准推荐最匹配的职位',
+      title: '薪资预测',
+      description: '基于机器学习算法，分析职位要求、技能水平和市场数据，为您智能预测职位薪资范围',
       color: 'from-blue-500 to-cyan-500',
     },
     {
@@ -74,7 +94,7 @@ export default function Home() {
               找到您的理想工作
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-blue-100">
-              智能推荐 · 精准匹配 · 高效求职
+              薪资预测 · 精准匹配 · 高效求职
             </p>
 
             {/* 搜索框 */}
@@ -108,7 +128,7 @@ export default function Home() {
                 href="/recommendations"
                 className="px-8 py-4 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg border-2 border-white"
               >
-                获取智能推荐
+                开始薪资预测
               </Link>
             </div>
           </div>
@@ -131,7 +151,9 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">{stat.value}</div>
+                <div className={`text-4xl font-bold text-blue-600 mb-2 ${loading ? 'animate-pulse' : ''}`}>
+                  {stat.value}
+                </div>
                 <div className="text-gray-600">{stat.label}</div>
               </div>
             ))}
