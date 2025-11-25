@@ -194,19 +194,18 @@ class SalaryPredictionView(APIView):
                 'skills': data.get('skills', []),
             }
 
-            # 预测
-            avg_salary = predictor.predict(job_features)
-            avg, min_sal, max_sal = predictor.predict_salary_range(job_features, confidence=0.8)
+            # 预测（使用新方法，获取真实的置信度）
+            prediction_result = predictor.predict_with_confidence(job_features)
 
             # 计算年薪
-            annual_salary = avg * job_features['salary_months']
+            annual_salary = prediction_result['predicted_salary'] * job_features['salary_months']
 
             result = {
-                'predicted_salary': round(avg_salary, 0),
-                'salary_min': round(min_sal, 0),
-                'salary_max': round(max_sal, 0),
+                'predicted_salary': round(prediction_result['predicted_salary'], 0),
+                'salary_min': round(prediction_result['salary_min'], 0),
+                'salary_max': round(prediction_result['salary_max'], 0),
                 'annual_salary': round(annual_salary / 10000, 1),  # 万元
-                'confidence': 0.8
+                'confidence': round(prediction_result['confidence'], 3)  # 真实的动态置信度
             }
 
             # 记录预测历史
@@ -218,9 +217,9 @@ class SalaryPredictionView(APIView):
                     experience=data['experience'],
                     industry=data.get('industry', ''),
                     skills=data.get('skills', []),
-                    predicted_salary=avg_salary,
-                    salary_min=min_sal,
-                    salary_max=max_sal
+                    predicted_salary=prediction_result['predicted_salary'],
+                    salary_min=prediction_result['salary_min'],
+                    salary_max=prediction_result['salary_max']
                 )
             else:
                 # 匿名用户也记录
@@ -230,9 +229,9 @@ class SalaryPredictionView(APIView):
                     experience=data['experience'],
                     industry=data.get('industry', ''),
                     skills=data.get('skills', []),
-                    predicted_salary=avg_salary,
-                    salary_min=min_sal,
-                    salary_max=max_sal
+                    predicted_salary=prediction_result['predicted_salary'],
+                    salary_min=prediction_result['salary_min'],
+                    salary_max=prediction_result['salary_max']
                 )
 
             return Response(result)

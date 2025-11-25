@@ -322,6 +322,69 @@ class SalaryPredictor:
 
         return float(prediction)
 
+    def predict_with_confidence(self, job_features):
+        """
+        预测薪资并计算预测置信度
+
+        Args:
+            job_features: 职位特征
+
+        Returns:
+            dict: {
+                'predicted_salary': 预测平均薪资,
+                'salary_min': 最低薪资估计 (80% 置信区间),
+                'salary_max': 最高薪资估计 (80% 置信区间),
+                'confidence': 预测置信度 (0-1)
+            }
+        """
+        if self.model is None:
+            raise ValueError("请先训练或加载模型")
+
+        # 准备特征
+        X = self._prepare_single_feature(job_features)
+
+        # 使用随机森林的所有树进行预测
+        predictions = np.array([tree.predict(X)[0] for tree in self.model.estimators_])
+
+        # 计算平均薪资
+        avg_salary = predictions.mean()
+
+        # 计算标准差和变异系数
+        std = predictions.std()
+        cv = std / avg_salary if avg_salary > 0 else 1  # 变异系数 (Coefficient of Variation)
+
+        # 计算置信度：基于预测的一致性
+        # 变异系数越小，置信度越高
+        # 针对小数据集调整后的映射 (训练集仅309个样本):
+        # cv < 0.20: 高置信度 (>80%)
+        # cv = 0.30: 中等置信度 (~60%)
+        # cv = 0.40: 一般置信度 (~40%)
+        # cv = 0.50: 低置信度 (~25%)
+        # cv > 0.60: 极低置信度 (<15%)
+
+        # 使用更宽松的sigmoid函数
+        confidence = 1 / (1 + np.exp(10 * (cv - 0.35)))
+
+        # 确保置信度不会太低（最低15%）
+        confidence = max(confidence, 0.15)
+
+        # 计算80%置信区间
+        from scipy import stats
+        z_score = stats.norm.ppf(0.9)  # 80% 置信区间
+        margin = z_score * std
+
+        min_salary = max(avg_salary - margin, 0)
+        max_salary = avg_salary + margin
+
+        return {
+            'predicted_salary': float(avg_salary),
+            'salary_min': float(min_salary),
+            'salary_max': float(max_salary),
+            'confidence': float(confidence),
+            'std': float(std),
+            'cv': float(cv)
+        }
+
     def predict_salary_range(self, job_features, confidence=0.8):
         """
         预测薪资范围
