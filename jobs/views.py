@@ -735,3 +735,227 @@ def dashboard_screen_data(request):
         'education_distribution': education_data,
         'experience_distribution': experience_data,
     })
+
+
+# 简历优化和文档导出 API
+from django.http import HttpResponse
+from .document_generator import ReportGenerator, ResumeDocumentGenerator
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def optimize_resume(request):
+    """
+    优化简历内容
+
+    请求参数:
+    - resume_text: 原始简历文本
+    - analysis_data: 简历分析数据
+    - target_position: 目标职位（可选）
+    - optimization_goals: 优化目标列表（可选）
+
+    返回:
+    - success: 是否成功
+    - optimized_resume: 优化后的简历数据
+    - changes: 修改说明列表
+    - optimization_summary: 整体优化说明
+    """
+    try:
+        resume_text = request.data.get('resume_text')
+        analysis_data = request.data.get('analysis_data')
+        target_position = request.data.get('target_position')
+        optimization_goals = request.data.get('optimization_goals')
+
+        if not resume_text or not analysis_data:
+            return Response(
+                {'error': '缺少必要参数：resume_text 和 analysis_data'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 创建优化器
+        from .ai_analyzer import ResumeOptimizer
+        optimizer = ResumeOptimizer()
+
+        # 执行优化
+        result = optimizer.optimize_resume(
+            resume_text=resume_text,
+            analysis_data=analysis_data,
+            target_position=target_position,
+            optimization_goals=optimization_goals
+        )
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {'error': f'优化简历时出错: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_improvement_suggestions(request):
+    """
+    获取简历改进建议
+
+    请求参数:
+    - analysis_data: 简历分析数据
+    - target_position: 目标职位（可选）
+
+    返回:
+    - suggestions: 改进建议列表
+    """
+    try:
+        analysis_data = request.data.get('analysis_data')
+        target_position = request.data.get('target_position')
+
+        if not analysis_data:
+            return Response(
+                {'error': '缺少必要参数：analysis_data'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 创建优化器
+        from .ai_analyzer import ResumeOptimizer
+        optimizer = ResumeOptimizer()
+
+        # 生成建议
+        suggestions = optimizer.generate_improvement_suggestions(
+            analysis_data=analysis_data,
+            target_position=target_position
+        )
+
+        return Response({
+            'success': True,
+            'suggestions': suggestions
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {'error': f'生成建议时出错: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def export_analysis_report(request):
+    """
+    导出分析报告（Word 格式）
+
+    请求参数:
+    - analysis_data: 简历分析数据
+    - recommendations: AI 推荐内容（可选）
+    - chat_history: 对话历史（可选）
+    - format: 文档格式（word，未来可扩展 pdf）
+
+    返回:
+    - Word 文档文件下载流
+    """
+    try:
+        analysis_data = request.data.get('analysis_data')
+        recommendations = request.data.get('recommendations', '')
+        chat_history = request.data.get('chat_history', [])
+        file_format = request.data.get('format', 'word')
+
+        if not analysis_data:
+            return Response(
+                {'error': '缺少必要参数：analysis_data'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 创建报告生成器
+        generator = ReportGenerator()
+
+        if file_format == 'word':
+            # 生成 Word 报告
+            buffer = generator.generate_analysis_report_word(
+                analysis_data=analysis_data,
+                recommendations=recommendations,
+                chat_history=chat_history
+            )
+
+            # 准备响应
+            response = HttpResponse(
+                buffer.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+            response['Content-Disposition'] = 'attachment; filename="简历分析报告.docx"'
+            return response
+        else:
+            return Response(
+                {'error': f'不支持的格式: {file_format}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    except Exception as e:
+        return Response(
+            {'error': f'导出报告时出错: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def export_resume_document(request):
+    """
+    导出优化后的简历文档（Word 格式）
+
+    请求参数:
+    - resume_data: 简历数据（结构化或分析数据）
+    - template_style: 模板风格（modern/classic，可选）
+    - format: 文档格式（word，未来可扩展 pdf）
+    - optimized_content: AI 优化后的文本（可选）
+
+    返回:
+    - Word 文档文件下载流
+    """
+    try:
+        resume_data = request.data.get('resume_data')
+        template_style = request.data.get('template_style', 'modern')
+        file_format = request.data.get('format', 'word')
+        optimized_content = request.data.get('optimized_content')
+
+        if not resume_data:
+            return Response(
+                {'error': '缺少必要参数：resume_data'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 创建简历文档生成器
+        generator = ResumeDocumentGenerator()
+
+        if file_format == 'word':
+            # 判断是完整简历数据还是分析数据
+            if 'personal_info' in resume_data or 'work_experience' in resume_data:
+                # 完整简历数据
+                buffer = generator.generate_resume_word(
+                    resume_data=resume_data,
+                    template_style=template_style
+                )
+            else:
+                # 简历分析数据，生成简单格式
+                buffer = generator.generate_simple_resume_word(
+                    analysis_data=resume_data,
+                    optimized_content=optimized_content
+                )
+
+            # 准备响应
+            response = HttpResponse(
+                buffer.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+            response['Content-Disposition'] = 'attachment; filename="优化后的简历.docx"'
+            return response
+        else:
+            return Response(
+                {'error': f'不支持的格式: {file_format}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    except Exception as e:
+        return Response(
+            {'error': f'导出简历时出错: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -75,7 +75,7 @@ export default function ResumeUploader({ onAnalysisComplete }: ResumeUploaderPro
       const data = await response.json()
 
       if (data.success) {
-        onAnalysisComplete(data.resume_analysis)
+        onAnalysisComplete(data)  // 传递完整的数据对象，包括 resume_text
       } else {
         setError(data.error || '分析失败')
       }

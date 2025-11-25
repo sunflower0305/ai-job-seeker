@@ -13,6 +13,10 @@ from .views import (
     ResumeAnalysisViewSet,
     ConversationalAssistantViewSet,
     dashboard_screen_data,
+    optimize_resume,
+    get_improvement_suggestions,
+    export_analysis_report,
+    export_resume_document,
 )
 
 router = DefaultRouter()
@@ -26,4 +30,9 @@ router.register('ai-assistant', ConversationalAssistantViewSet, basename='ai-ass
 urlpatterns = [
     path('', include(router.urls)),
     path('dashboard-screen/', dashboard_screen_data, name='dashboard-screen'),
+    # 简历优化和文档导出
+    path('resume-optimize/', optimize_resume, name='optimize-resume'),
+    path('resume-suggestions/', get_improvement_suggestions, name='resume-suggestions'),
+    path('export-report/', export_analysis_report, name='export-report'),
+    path('export-resume/', export_resume_document, name='export-resume'),
 ]

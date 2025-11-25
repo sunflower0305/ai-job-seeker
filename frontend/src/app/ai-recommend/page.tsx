@@ -7,17 +7,147 @@ import AIAssistantChat from '@/components/ui/AIAssistantChat'
 export default function AIRecommendPage() {
   const [step, setStep] = useState<'upload' | 'chat'>('upload')
   const [resumeAnalysis, setResumeAnalysis] = useState<any>(null)
+  const [resumeText, setResumeText] = useState<string>('')
   const [sessionId, setSessionId] = useState<string | undefined>()
+  const [isOptimizing, setIsOptimizing] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [optimizationResult, setOptimizationResult] = useState<any>(null)
 
-  const handleAnalysisComplete = (analysis: any) => {
-    setResumeAnalysis(analysis)
+  const handleAnalysisComplete = (data: any) => {
+    setResumeAnalysis(data.resume_analysis)
+    setResumeText(data.resume_text || '')
     setStep('chat')
   }
 
   const handleReset = () => {
     setStep('upload')
     setResumeAnalysis(null)
+    setResumeText('')
     setSessionId(undefined)
+    setOptimizationResult(null)
+  }
+
+  // 优化简历
+  const handleOptimizeResume = async () => {
+    if (!resumeText || !resumeAnalysis) {
+      alert('缺少简历数据')
+      return
+    }
+
+    setIsOptimizing(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/jobs/resume-optimize/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resume_text: resumeText,
+          analysis_data: resumeAnalysis,
+          target_position: resumeAnalysis.desired_position,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setOptimizationResult(result)
+        alert('简历优化完成！查看下方的优化建议')
+      } else {
+        alert(`优化失败: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('优化简历时出错:', error)
+      alert('优化简历时出现错误')
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
+
+  // 导出分析报告
+  const handleExportReport = async () => {
+    if (!resumeAnalysis) {
+      alert('缺少分析数据')
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/jobs/export-report/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          analysis_data: resumeAnalysis,
+          format: 'word',
+        }),
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = '简历分析报告.docx'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+      } else {
+        alert('导出报告失败')
+      }
+    } catch (error) {
+      console.error('导出报告时出错:', error)
+      alert('导出报告时出现错误')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  // 导出简历文档
+  const handleExportResume = async (useOptimized: boolean = false) => {
+    const dataToExport = useOptimized && optimizationResult
+      ? optimizationResult.optimized_resume
+      : resumeAnalysis
+
+    if (!dataToExport) {
+      alert('缺少简历数据')
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/jobs/export-resume/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resume_data: dataToExport,
+          format: 'word',
+        }),
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = useOptimized ? '优化后的简历.docx' : '简历.docx'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+      } else {
+        alert('导出简历失败')
+      }
+    } catch (error) {
+      console.error('导出简历时出错:', error)
+      alert('导出简历时出现错误')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -97,6 +227,43 @@ export default function AIRecommendPage() {
                   >
                     重新上传
                   </button>
+                </div>
+
+                {/* 操作按钮区域 */}
+                <div className="mb-6 space-y-2">
+                  <button
+                    onClick={handleOptimizeResume}
+                    disabled={isOptimizing}
+                    className="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isOptimizing ? '正在优化...' : '🚀 AI 优化简历'}
+                  </button>
+
+                  <button
+                    onClick={handleExportReport}
+                    disabled={isExporting}
+                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isExporting ? '导出中...' : '📄 导出分析报告'}
+                  </button>
+
+                  <button
+                    onClick={() => handleExportResume(false)}
+                    disabled={isExporting}
+                    className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isExporting ? '导出中...' : '💾 导出简历文档'}
+                  </button>
+
+                  {optimizationResult && (
+                    <button
+                      onClick={() => handleExportResume(true)}
+                      disabled={isExporting}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:from-green-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {isExporting ? '导出中...' : '✨ 导出优化后简历'}
+                    </button>
+                  )}
                 </div>
 
                 {resumeAnalysis && (
@@ -191,6 +358,26 @@ export default function AIRecommendPage() {
                         <p className="text-gray-600 text-sm whitespace-pre-wrap">
                           {resumeAnalysis.work_experience}
                         </p>
+                      </div>
+                    )}
+
+                    {/* 优化结果展示 */}
+                    {optimizationResult && (
+                      <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <h3 className="text-sm font-medium text-purple-800 mb-2">
+                          ✨ 优化建议
+                        </h3>
+                        <p className="text-sm text-purple-700 mb-3">
+                          {optimizationResult.optimization_summary}
+                        </p>
+                        <div className="space-y-2">
+                          {optimizationResult.changes && optimizationResult.changes.slice(0, 3).map((change: any, index: number) => (
+                            <div key={index} className="text-xs">
+                              <span className="font-medium text-purple-800">{change.section}:</span>
+                              <span className="text-purple-600 ml-1">{change.reason}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

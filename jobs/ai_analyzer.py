@@ -462,6 +462,11 @@ def analyze_and_recommend(file_content: bytes, filename: str) -> Dict[str, Any]:
         recommender = JobRecommender()
         recommendation = recommender.recommend_jobs(analysis)
 
+        # 4. 添加原始简历文本到返回结果中
+        if recommendation.get('success'):
+            recommendation['resume_text'] = resume_text  # 添加原始文本
+            recommendation['filename'] = filename  # 添加文件名
+
         return recommendation
 
     except Exception as e:
@@ -1002,3 +1007,252 @@ def create_conversational_session(resume_analysis: Optional[Dict[str, Any]] = No
     """
     assistant = ConversationalJobAssistant()
     return assistant
+
+
+class ResumeOptimizer:
+    """简历优化器 - 使用 AI 优化简历内容"""
+
+    def __init__(self, api_key: str = None, base_url: str = None, model: str = None):
+        """
+        初始化优化器
+
+        Args:
+            api_key: LLM API密钥，如果为None则从环境变量读取
+            base_url: API基础URL，如果为None则从环境变量读取
+            model: 使用的模型名称，如果为None则从环境变量读取
+        """
+        self.api_key = api_key or os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("未找到 LLM API Key，请设置环境变量 LLM_API_KEY 或 OPENAI_API_KEY")
+
+        self.base_url = base_url or os.getenv("LLM_BASE_URL")
+        self.model = model or os.getenv("LLM_MODEL") or "qwen-plus"
+
+        # 构建 LLM 配置
+        llm_config = {
+            "model": self.model,
+            "openai_api_key": self.api_key,
+            "temperature": 0.7  # 提高创造性
+        }
+
+        # 如果提供了自定义 base_url，添加到配置中
+        if self.base_url:
+            llm_config["openai_api_base"] = self.base_url
+
+        self.llm = ChatOpenAI(**llm_config)
+
+    def optimize_resume(
+        self,
+        resume_text: str,
+        analysis_data: Dict[str, Any],
+        target_position: str = None,
+        optimization_goals: List[str] = None
+    ) -> Dict[str, Any]:
+        """
+        优化简历内容
+
+        Args:
+            resume_text: 原始简历文本
+            analysis_data: 简历分析数据
+            target_position: 目标职位（可选）
+            optimization_goals: 优化目标列表（可选）
+
+        Returns:
+            优化结果，包含优化后的内容和修改说明
+        """
+        # 默认优化目标
+        if not optimization_goals:
+            optimization_goals = [
+                "量化工作成果，添加具体数据和指标",
+                "突出与目标职位相关的技能和经验",
+                "使用动作动词开头，增强表现力",
+                "优化内容结构，突出核心优势",
+                "精简冗余信息，提高简洁性"
+            ]
+
+        # 构建优化提示
+        target_position_text = f"目标职位：{target_position}" if target_position else "通用职位优化"
+
+        goals_text = "\n".join([f"{i+1}. {goal}" for i, goal in enumerate(optimization_goals)])
+
+        prompt = f"""
+你是一位专业的简历优化顾问，请帮助优化以下简历。
+
+{target_position_text}
+
+优化目标：
+{goals_text}
+
+当前简历分析结果：
+- 技能：{', '.join(analysis_data.get('skills', []))}
+- 工作年限：{analysis_data.get('experience_years', 0)} 年
+- 学历：{analysis_data.get('education', '未知')}
+- 核心优势：{', '.join(analysis_data.get('key_strengths', []))}
+
+原始简历内容：
+{resume_text}
+
+请提供：
+1. 优化后的完整简历（结构化JSON格式，包含以下部分）：
+   - personal_info: {{name, phone, email, location}}
+   - job_intent: {{position, salary, location}}
+   - education: [{{school, major, degree, time, description}}]
+   - skills: [分类技能组，如 {{"category": "编程语言", "items": ["Python", "Java"]}}] 或 简单列表
+   - work_experience: [{{company, position, time, responsibilities: []}}]
+   - projects: [{{name, time, description, tech_stack: [], achievements: []}}]
+   - self_evaluation: 个人评价文本
+
+2. 主要修改说明（列表形式）：
+   - 每条说明包含：section（部分名称）、change_type（修改类型）、reason（原因）、example（具体示例）
+
+请以如下JSON格式返回：
+{{
+  "optimized_resume": {{...完整的简历数据...}},
+  "changes": [
+    {{
+      "section": "技能",
+      "change_type": "量化增强",
+      "reason": "添加具体的技能水平和使用时长",
+      "example": "Python → Python (3年经验，熟练使用Django/Flask框架)"
+    }},
+    ...
+  ],
+  "optimization_summary": "整体优化说明"
+}}
+
+注意：
+- 保持真实性，不要编造虚假信息
+- 对于数据不足的部分，可以合理推断但要标注
+- 确保JSON格式正确，可以被解析
+"""
+
+        try:
+            messages = [
+                SystemMessage(content="你是一位专业的简历优化顾问，擅长将普通简历改写为高质量的专业简历。"),
+                HumanMessage(content=prompt)
+            ]
+
+            response = self.llm.invoke(messages)
+            result_text = response.content
+
+            # 解析JSON
+            if "```json" in result_text:
+                result_text = result_text.split("```json")[1].split("```")[0]
+            elif "```" in result_text:
+                result_text = result_text.split("```")[1].split("```")[0]
+
+            optimization_result = json.loads(result_text.strip())
+
+            return {
+                "success": True,
+                "optimized_resume": optimization_result.get("optimized_resume", {}),
+                "changes": optimization_result.get("changes", []),
+                "optimization_summary": optimization_result.get("optimization_summary", ""),
+                "original_analysis": analysis_data
+            }
+
+        except json.JSONDecodeError as e:
+            print(f"JSON解析错误: {e}")
+            print(f"原始响应: {result_text}")
+            return {
+                "success": False,
+                "error": "优化结果解析失败，AI 返回的格式不正确",
+                "raw_response": result_text[:500]  # 只返回前500字符
+            }
+        except Exception as e:
+            import traceback
+            error_msg = str(e)
+            print(f"优化简历时出错: {error_msg}")
+            print(f"详细错误: {traceback.format_exc()}")
+
+            # 根据错误类型返回更友好的提示
+            if "Connection" in error_msg or "connection" in error_msg.lower():
+                return {
+                    "success": False,
+                    "error": "网络连接失败，请检查网络连接或稍后重试"
+                }
+            elif "timeout" in error_msg.lower():
+                return {
+                    "success": False,
+                    "error": "请求超时，请稍后重试"
+                }
+            elif "API" in error_msg or "key" in error_msg.lower():
+                return {
+                    "success": False,
+                    "error": "API 配置错误，请检查 API Key 配置"
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"优化失败: {error_msg[:200]}"
+                }
+
+    def generate_improvement_suggestions(
+        self,
+        analysis_data: Dict[str, Any],
+        target_position: str = None
+    ) -> List[Dict[str, str]]:
+        """
+        生成简历改进建议（不进行完整重写）
+
+        Args:
+            analysis_data: 简历分析数据
+            target_position: 目标职位（可选）
+
+        Returns:
+            改进建议列表
+        """
+        target_text = f"针对 {target_position} 职位" if target_position else ""
+
+        prompt = f"""
+请{target_text}为以下简历提供具体的改进建议。
+
+简历分析结果：
+- 技能：{', '.join(analysis_data.get('skills', []))}
+- 工作年限：{analysis_data.get('experience_years', 0)} 年
+- 学历：{analysis_data.get('education', '未知')}
+- 期望职位：{analysis_data.get('desired_position', '未提及')}
+- 核心优势：{', '.join(analysis_data.get('key_strengths', []))}
+- 工作经历：{analysis_data.get('work_experience', '未提供')[:500]}
+
+请提供5-8条具体的改进建议，每条建议包含：
+1. section: 需要改进的部分（技能/经验/教育/其他）
+2. suggestion: 具体建议
+3. priority: 优先级（高/中/低）
+4. example: 改进示例（如果适用）
+
+请以JSON格式返回：
+{{
+  "suggestions": [
+    {{
+      "section": "技能",
+      "suggestion": "建议量化技能水平",
+      "priority": "高",
+      "example": "Python → Python (3年，精通Django)"
+    }},
+    ...
+  ]
+}}
+"""
+
+        try:
+            messages = [
+                SystemMessage(content="你是一位专业的简历顾问，擅长给出实用的改进建议。"),
+                HumanMessage(content=prompt)
+            ]
+
+            response = self.llm.invoke(messages)
+            result_text = response.content
+
+            # 解析JSON
+            if "```json" in result_text:
+                result_text = result_text.split("```json")[1].split("```")[0]
+            elif "```" in result_text:
+                result_text = result_text.split("```")[1].split("```")[0]
+
+            result = json.loads(result_text.strip())
+            return result.get("suggestions", [])
+
+        except Exception as e:
+            print(f"生成建议时出错: {e}")
+            return []
