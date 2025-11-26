@@ -903,19 +903,15 @@ def export_resume_document(request):
     导出优化后的简历文档（Word 格式）
 
     请求参数:
-    - resume_data: 简历数据（结构化或分析数据）
-    - template_style: 模板风格（modern/classic，可选）
-    - format: 文档格式（word，未来可扩展 pdf）
-    - optimized_content: AI 优化后的文本（可选）
+    - resume_data: 简历数据（优化后的数据或分析数据）
+    - format: 文档格式（word）
 
     返回:
     - Word 文档文件下载流
     """
     try:
         resume_data = request.data.get('resume_data')
-        template_style = request.data.get('template_style', 'modern')
         file_format = request.data.get('format', 'word')
-        optimized_content = request.data.get('optimized_content')
 
         if not resume_data:
             return Response(
@@ -928,17 +924,17 @@ def export_resume_document(request):
 
         if file_format == 'word':
             # 判断是完整简历数据还是分析数据
-            if 'personal_info' in resume_data or 'work_experience' in resume_data:
-                # 完整简历数据
+            # 完整简历数据包含 personal_info, job_intent, projects 等字段
+            if 'personal_info' in resume_data or 'job_intent' in resume_data or 'projects' in resume_data:
+                # 这是完整的简历数据，使用 generate_resume_word
                 buffer = generator.generate_resume_word(
                     resume_data=resume_data,
-                    template_style=template_style
+                    template_style='modern'
                 )
             else:
-                # 简历分析数据，生成简单格式
+                # 这是简历分析数据，使用 generate_simple_resume_word
                 buffer = generator.generate_simple_resume_word(
-                    analysis_data=resume_data,
-                    optimized_content=optimized_content
+                    analysis_data=resume_data
                 )
 
             # 准备响应
@@ -955,6 +951,10 @@ def export_resume_document(request):
             )
 
     except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"导出简历失败: {str(e)}")
+        print(f"详细错误: {error_detail}")
         return Response(
             {'error': f'导出简历时出错: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -873,9 +873,10 @@ class ConversationalJobAssistant:
             search_jobs_by_keywords,
             search_jobs_advanced,
             get_job_details,
-            search_web_for_jobs,
-            search_salary_trends,
-            search_company_info
+            # 注释掉网络搜索工具以提高效率和减少迭代次数
+            # search_web_for_jobs,
+            # search_salary_trends,
+            # search_company_info
         ]
 
     def _create_conversational_agent(self):
@@ -893,20 +894,31 @@ class ConversationalJobAssistant:
 【数据库查询工具】
 - search_jobs_by_keywords: 快速根据关键词搜索数据库中的职位
 - search_jobs_advanced: 使用多个条件进行高级搜索（技能、薪资、城市等）
-- get_job_details: 获取特定职位的详细信息
+- get_job_details: 获取特定职位的详细信息（仅在用户明确要求时使用）
 
-【网络搜索工具】
-- search_web_for_jobs: 在网上搜索最新的招聘信息
-- search_salary_trends: 搜索行业薪资趋势和市场行情
-- search_company_info: 搜索公司背景资料和评价
+重要规则：
+1. 【必须】当用户提到简历分析结果或首次询问职位推荐时，立即使用 search_jobs_advanced 工具搜索数据库
+2. 【必须】使用用户简历中的技能、期望职位等信息作为搜索条件
+3. 【禁止】在没有使用任何数据库工具的情况下说"数据访问限制"或类似的话
+4. 如果数据库搜索返回空结果，尝试放宽搜索条件（如只用技能或职位名称）
+5. 向用户展示至少3-5个具体的职位推荐，包括职位名称、公司、薪资、城市等信息
+6. 【重要】一次工具调用应该足够，不要反复调用相同的工具
+7. 【重要】获得职位列表后直接展示给用户，不要再调用 get_job_details
+8. 【重要】如果搜索结果为空，不要继续尝试其他搜索，直接告诉用户并建议调整条件
 
-使用建议：
-1. 优先使用数据库工具查询本地职位数据（速度快、数据准确）
-2. 当用户想了解最新招聘动态时，使用 search_web_for_jobs
-3. 当用户询问薪资水平时，结合数据库数据和 search_salary_trends 给出建议
-4. 当用户对某公司感兴趣时，使用 search_company_info 提供更多背景信息
+效率优化：
+- 优先使用 search_jobs_advanced（一次性获取多个职位信息）
+- 避免循环调用工具
+- 搜索结果已包含足够信息，无需再查询详情
 
-请以友好、专业的方式与用户交流，理解他们的需求，并提供有价值的建议。"""),
+示例对话流程：
+用户：我的技能是Python、Django，3年经验，期望职位是后端开发工程师
+你的行动：
+1. 立即调用 search_jobs_advanced(skills=["Python", "Django"], position_title="后端开发", limit=10)
+2. 获取职位列表后，向用户展示具体的职位信息
+3. 不要说任何关于"数据限制"的话
+
+请以友好、专业的方式与用户交流，理解他们的需求，并主动搜索和推荐具体的职位。"""),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -917,7 +929,9 @@ class ConversationalJobAssistant:
             agent=agent,
             tools=self.tools,
             verbose=True,
-            max_iterations=5
+            max_iterations=15,  # 增加到15次迭代
+            early_stopping_method="generate",  # 达到最大迭代时生成最终答案
+            handle_parsing_errors=True  # 处理解析错误
         )
 
         return agent_executor
@@ -937,7 +951,7 @@ class ConversationalJobAssistant:
             # 如果提供了简历上下文，在第一次对话时添加到消息中
             if resume_context and not self.conversation_history:
                 context_message = f"""
-我已经分析了您的简历，以下是关键信息：
+我已经分析了用户的简历，以下是关键信息：
 - 技能: {', '.join(resume_context.get('skills', []))}
 - 工作年限: {resume_context.get('experience_years', 0)}年
 - 学历: {resume_context.get('education', '未知')}
@@ -945,7 +959,9 @@ class ConversationalJobAssistant:
 - 期望薪资: {resume_context.get('desired_salary', '不限')}
 - 核心优势: {', '.join(resume_context.get('key_strengths', []))}
 
-现在让我为您推荐合适的职位。{user_message}
+用户说：{user_message}
+
+请立即使用 search_jobs_advanced 工具根据上述简历信息搜索数据库中的匹配职位，并向用户推荐至少5个具体的职位。
 """
                 input_message = context_message
             else:
@@ -967,6 +983,10 @@ class ConversationalJobAssistant:
 
             ai_response = result.get("output", "抱歉，我无法处理您的请求。")
 
+            # 检查是否因为达到最大迭代次数而停止
+            if not ai_response or "Agent stopped" in str(result):
+                ai_response = "抱歉，处理请求时遇到了一些复杂情况。让我直接为您推荐一些职位。"
+
             # 更新对话历史
             self.conversation_history.append({
                 "role": "user",
@@ -984,10 +1004,29 @@ class ConversationalJobAssistant:
             }
 
         except Exception as e:
+            error_msg = str(e)
+
+            # 特殊处理max_iterations错误
+            if "Agent stopped due to max iterations" in error_msg or "max_iterations" in error_msg.lower():
+                friendly_msg = """抱歉，我在处理您的请求时需要进行较多步骤。让我简化一下：
+
+基于您的简历信息，我建议您：
+1. 查看下方的"为您推荐的职位"列表，这些是根据您的技能和经验自动匹配的职位
+2. 您可以直接询问具体的问题，比如"有什么Python相关的工作"
+3. 或者点击职位卡片查看详细信息
+
+如有其他问题，请随时告诉我！"""
+
+                return {
+                    "success": True,
+                    "response": friendly_msg,
+                    "conversation_history": self.conversation_history
+                }
+
             return {
                 "success": False,
-                "error": str(e),
-                "response": f"抱歉，处理您的消息时出现错误: {str(e)}"
+                "error": error_msg,
+                "response": f"抱歉，处理您的消息时出现错误: {error_msg}"
             }
 
     def reset_conversation(self):

@@ -9,6 +9,7 @@ export default function Navbar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isAIOpen, setIsAIOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<'user' | 'admin' | null>(null);
   const [username, setUsername] = useState('');
@@ -44,8 +45,12 @@ export default function Navbar() {
     { name: '首页', path: '/' },
     { name: '职位列表', path: '/jobs' },
     { name: '薪资预测', path: '/recommendations' },
-    { name: 'AI推荐', path: '/ai-recommend' },
     { name: '我的收藏', path: '/collections' },
+  ];
+
+  const aiItems = [
+    { name: 'AI职位推荐', path: '/ai-job-recommend' },
+    { name: 'AI简历优化', path: '/ai-resume-optimize' },
   ];
 
   const analyticsItems = [
@@ -89,6 +94,43 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
+              {/* AI功能下拉菜单 */}
+              <div className="relative inline-flex items-center"
+                onMouseEnter={() => setIsAIOpen(true)}
+                onMouseLeave={() => setIsAIOpen(false)}
+              >
+                <button
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors h-16 ${
+                    pathname.startsWith('/ai-job-recommend') || pathname.startsWith('/ai-resume-optimize')
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  AI功能
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isAIOpen && (
+                  <div className="absolute left-0 top-full mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                    <div className="py-1">
+                      {aiItems.map((item) => (
+                        <Link
+                          key={item.path}
+                          href={item.path}
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            pathname === item.path
+                              ? 'bg-blue-50 text-blue-700 font-medium'
+                              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                          }`}
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               {/* 数据分析下拉菜单 */}
               <div className="relative inline-flex items-center"
                 onMouseEnter={() => setIsAnalyticsOpen(true)}
@@ -231,6 +273,43 @@ export default function Navbar() {
                 {item.name}
               </Link>
             ))}
+            {/* AI功能下拉菜单 - 移动端 */}
+            <div>
+              <button
+                onClick={() => setIsAIOpen(!isAIOpen)}
+                className={`w-full flex justify-between items-center pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname.startsWith('/ai-job-recommend') || pathname.startsWith('/ai-resume-optimize')
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                }`}
+              >
+                AI功能
+                <svg className={`w-5 h-5 transition-transform ${isAIOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isAIOpen && (
+                <div className="bg-gray-50">
+                  {aiItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      className={`block pl-8 pr-4 py-2 text-sm ${
+                        pathname === item.path
+                          ? 'text-blue-700 font-medium bg-blue-50'
+                          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      }`}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsAIOpen(false);
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
             {/* 数据分析下拉菜单 - 移动端 */}
             <div>
               <button
