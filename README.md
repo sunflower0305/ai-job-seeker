@@ -2,6 +2,7 @@
 
 把求职里最常见的几件事放到同一个系统里：上传简历、分析岗位、推荐职位、预测薪资、优化简历、导出文档。
 项目演示：[https://job.zhangleyang.com](https://job.zhangleyang.com)
+博客介绍：https://blog.zhangleyang.com/2026-05-31-aainct
 
 ## 项目简介
 
