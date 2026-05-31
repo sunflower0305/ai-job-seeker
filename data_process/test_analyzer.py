@@ -9,6 +9,7 @@ from pathlib import Path
 
 # 添加父目录到路径
 sys.path.insert(0, str(Path(__file__).parent))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 from analyzer import JobDataAnalyzer
 import logging
@@ -25,7 +26,7 @@ def test_analyzer():
     """测试数据分析器"""
 
     # 使用测试数据
-    data_file = "/home/leyang/workplace/bishe/data/processed/test_cleaned_jobs.csv"
+    data_file = PROJECT_ROOT / "data/processed/test_cleaned_jobs.csv"
 
     if not os.path.exists(data_file):
         logger.error(f"数据文件不存在: {data_file}")
@@ -45,7 +46,7 @@ def test_analyzer():
     results = analyzer.analyze_all()
 
     # 保存报告
-    report_file = "/home/leyang/workplace/bishe/data/processed/test_analysis_report.json"
+    report_file = PROJECT_ROOT / "data/processed/test_analysis_report.json"
     analyzer.save_report(report_file)
 
     logger.info("\n" + "="*80)

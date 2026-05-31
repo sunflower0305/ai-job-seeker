@@ -38,7 +38,7 @@ cleaner.save_cleaned_data('data/processed/cleaned_jobs')
 
 ```bash
 # 方法1：使用主程序（自动查找最新数据）
-cd /home/leyang/workplace/bishe/data_process
+cd /Users/joe/ai/ai-job-seeker/data_process
 python3 cleaner.py
 
 # 方法2：使用完整流程测试
@@ -228,7 +228,7 @@ k8s → Kubernetes
 ### 运行单元测试
 
 ```bash
-cd /home/leyang/workplace/bishe/data_process
+cd /Users/joe/ai/ai-job-seeker/data_process
 python3 test_cleaner.py -v
 ```
 

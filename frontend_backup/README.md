@@ -32,7 +32,7 @@
 ### 1. 启动Django服务器
 
 ```bash
-cd /home/leyang/workplace/bishe
+cd /Users/joe/ai/ai-job-seeker
 python3 manage.py runserver 8000
 ```
 
@@ -40,12 +40,12 @@ python3 manage.py runserver 8000
 
 在浏览器中打开以下页面：
 
-- **首页**: `file:///home/leyang/workplace/bishe/frontend/templates/index.html`
-- **职位列表**: `file:///home/leyang/workplace/bishe/frontend/templates/jobs.html`
-- **智能推荐**: `file:///home/leyang/workplace/bishe/frontend/templates/recommend.html`
-- **薪资预测**: `file:///home/leyang/workplace/bishe/frontend/templates/predict.html`
-- **用户登录**: `file:///home/leyang/workplace/bishe/frontend/templates/login.html`
-- **用户注册**: `file:///home/leyang/workplace/bishe/frontend/templates/register.html`
+- **首页**: `file:///Users/joe/ai/ai-job-seeker/frontend/templates/index.html`
+- **职位列表**: `file:///Users/joe/ai/ai-job-seeker/frontend/templates/jobs.html`
+- **智能推荐**: `file:///Users/joe/ai/ai-job-seeker/frontend/templates/recommend.html`
+- **薪资预测**: `file:///Users/joe/ai/ai-job-seeker/frontend/templates/predict.html`
+- **用户登录**: `file:///Users/joe/ai/ai-job-seeker/frontend/templates/login.html`
+- **用户注册**: `file:///Users/joe/ai/ai-job-seeker/frontend/templates/register.html`
 
 ## 功能说明
 

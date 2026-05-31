@@ -5,9 +5,11 @@
 
 import sys
 import os
+from pathlib import Path
 
 # 添加父目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 from cleaner import DataCleaner, DataValidator
 import logging
@@ -23,8 +25,8 @@ logger = logging.getLogger(__name__)
 def test_full_pipeline():
     """测试完整的清洗流程"""
 
-    # 使用模拟数据（使用绝对路径）
-    input_file = "/home/leyang/workplace/bishe/data/raw/mock_jobs.json"
+    # 使用模拟数据
+    input_file = PROJECT_ROOT / "data/raw/mock_jobs.json"
 
     if not os.path.exists(input_file):
         logger.error(f"数据文件不存在: {input_file}")
@@ -52,7 +54,7 @@ def test_full_pipeline():
     validation_report = validator.validate_all()
 
     # 5. 保存清洗后的数据
-    output_file = "/home/leyang/workplace/bishe/data/processed/test_cleaned_jobs"
+    output_file = PROJECT_ROOT / "data/processed/test_cleaned_jobs"
     cleaner.save_cleaned_data(output_file)
 
     # 6. 打印汇总信息

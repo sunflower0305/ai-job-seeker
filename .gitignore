@@ -51,6 +51,11 @@ data/models/*.joblib
 
 # Logs
 logs/*.log
+*.log
+
+# Runtime
+runtime/*.pid
+*.pid
 
 # OS
 .DS_Store

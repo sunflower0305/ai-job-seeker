@@ -17,14 +17,14 @@
 ### 步骤3：保存Cookie
 1. 运行Python脚本：
    ```bash
-   python save_cookies_manual.py
+   python scripts/crawlers/save_cookies_manual.py
    ```
 2. 粘贴刚才复制的Cookie字符串
 3. 按回车完成保存
 
 ### 步骤4：使用Cookie爬取
 ```bash
-python run_smart_crawler.py --total 50
+python scripts/crawlers/run_smart_crawler.py --total 50
 ```
 
 ---
@@ -117,7 +117,7 @@ A: 通常7-30天，过期后需要重新登录
 A: `data/cookies.json`
 
 ### Q3: 如何更新Cookie？
-A: 重新运行 `save_cookies_manual.py`
+A: 重新运行 `scripts/crawlers/save_cookies_manual.py`
 
 ### Q4: Cookie格式错误怎么办？
 A: 确保粘贴的是完整的 `document.cookie` 输出
@@ -149,13 +149,13 @@ A: 确保粘贴的是完整的 `document.cookie` 输出
 
 3. **保存Cookie**
    ```bash
-   python save_cookies_manual.py
+   python scripts/crawlers/save_cookies_manual.py
    # 粘贴Cookie字符串
    ```
 
 4. **开始爬取**
    ```bash
-   python run_smart_crawler.py \
+   python scripts/crawlers/run_smart_crawler.py \
      --cities 北京 \
      --keywords Python \
      --total 50

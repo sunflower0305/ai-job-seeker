@@ -302,7 +302,7 @@ python manage.py runserver 8000
 
 运行爬虫获取真实数据：
 ```bash
-python run_crawler.py
+python scripts/crawlers/run_crawler.py
 ```
 
 ### 3. 页面样式异常

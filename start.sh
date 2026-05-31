@@ -5,6 +5,10 @@ echo "  启动职位推荐平台"
 echo "=========================================="
 echo ""
 
+PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+RUNTIME_DIR="$PROJECT_ROOT/runtime"
+mkdir -p "$RUNTIME_DIR"
+
 # 检查后端端口是否被占用
 if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
     echo "⚠️  警告: 端口8000已被占用"
@@ -21,10 +25,10 @@ fi
 
 # 启动后端
 echo "🚀 启动后端服务..."
-cd /home/leyang/workplace/bishe
+cd "$PROJECT_ROOT"
 nohup python3 manage.py runserver > backend.log 2>&1 &
 BACKEND_PID=$!
-echo $BACKEND_PID > backend.pid
+echo $BACKEND_PID > "$RUNTIME_DIR/backend.pid"
 echo "   ✅ 后端已启动 (PID: $BACKEND_PID)"
 echo "   📍 地址: http://localhost:8000"
 echo ""
@@ -34,10 +38,10 @@ sleep 2
 
 # 启动前端
 echo "🚀 启动前端服务..."
-cd /home/leyang/workplace/bishe/frontend
+cd "$PROJECT_ROOT/frontend"
 nohup npm run dev > frontend.log 2>&1 &
 FRONTEND_PID=$!
-echo $FRONTEND_PID > frontend.pid
+echo $FRONTEND_PID > "$RUNTIME_DIR/frontend.pid"
 echo "   ✅ 前端已启动 (PID: $FRONTEND_PID)"
 echo "   📍 地址: http://localhost:3000"
 echo ""

@@ -59,34 +59,29 @@
 ## 项目结构
 
 ```
-job_analysis/
-├── crawler/              # 爬虫模块
-│   ├── __init__.py
-│   ├── boss_spider.py   # Boss直聘爬虫
-│   ├── zhilian_spider.py # 智联招聘爬虫
-│   └── utils.py         # 爬虫工具函数
-├── data_process/        # 数据处理模块
-│   ├── __init__.py
-│   ├── cleaner.py      # 数据清洗
-│   ├── analyzer.py     # 数据分析
-│   └── visualizer.py   # 数据可视化
-├── ml_models/           # 机器学习模块
-│   ├── __init__.py
-│   ├── recommender.py  # 职位推荐
-│   └── predictor.py    # 薪资预测
-├── web_app/             # Django Web应用
-│   ├── manage.py
-│   ├── job_system/      # 项目配置
-│   └── apps/            # 应用模块
-├── data/                # 数据存储
-│   ├── raw/            # 原始数据
-│   ├── processed/      # 处理后数据
-│   └── models/         # 训练模型
-├── config/              # 配置文件
-│   └── config.py
-├── logs/                # 日志文件
-├── requirements.txt     # 依赖包
-└── README.md
+ai-job-seeker/
+├── manage.py              # Django 管理入口
+├── start.sh / stop.sh     # 本地启动与停止脚本
+├── job_platform/          # Django 项目配置
+├── jobs/                  # 职位、分析、文档生成相关应用
+├── users/                 # 用户、权限、访问日志相关应用
+├── recommendations/       # 推荐相关应用
+├── crawler/               # 爬虫核心模块
+├── data_process/          # 数据清洗、分析、可视化模块
+├── ml_models/             # 机器学习模型
+├── frontend/              # Next.js 前端
+├── scripts/
+│   ├── crawlers/          # 爬虫运行、Cookie、页面诊断脚本
+│   └── data/              # 数据导入、清理、检查、初始化脚本
+├── tests/manual/          # 手动/集成验证脚本
+├── docs/
+│   ├── guides/            # 使用和功能指南
+│   └── reports/           # 阶段性报告和修复记录
+├── reports/               # JSON 等运行报告输出
+├── runtime/               # PID 等运行时文件
+├── data/                  # 原始数据、处理后数据、模型和图表
+├── config/                # 配置文件
+└── requirements.txt
 ```
 
 ## 安装部署
@@ -117,7 +112,6 @@ CREATE DATABASE job_analysis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ### 5. 数据迁移
 ```bash
-cd web_app
 python manage.py makemigrations
 python manage.py migrate
 ```
@@ -133,7 +127,7 @@ python manage.py runserver
 
 ### 数据爬取
 ```bash
-python crawler/boss_spider.py
+python scripts/crawlers/run_crawler.py
 ```
 
 ### 数据清洗
@@ -149,6 +143,12 @@ python data_process/analyzer.py
 ### 模型训练
 ```bash
 python ml_models/predictor.py --train
+```
+
+### 数据导入和检查
+```bash
+python scripts/data/import_jobs_data.py
+python scripts/data/check_data_quality.py
 ```
 
 ## 开发计划

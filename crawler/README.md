@@ -20,19 +20,19 @@ pip install -r requirements.txt
 
 ```bash
 # 爬取所有网站（默认：北京、上海、深圳、杭州，Python、Java等职位，每个2页）
-python run_crawler.py
+python scripts/crawlers/run_crawler.py
 
 # 只爬取Boss直聘
-python run_crawler.py --spider boss
+python scripts/crawlers/run_crawler.py --spider boss
 
 # 只爬取智联招聘
-python run_crawler.py --spider zhilian
+python scripts/crawlers/run_crawler.py --spider zhilian
 
 # 自定义城市和关键词
-python run_crawler.py --cities 北京 上海 --keywords Python Java --pages 3
+python scripts/crawlers/run_crawler.py --cities 北京 上海 --keywords Python Java --pages 3
 
 # 查看帮助
-python run_crawler.py --help
+python scripts/crawlers/run_crawler.py --help
 ```
 
 #### 方式2：单独运行某个爬虫

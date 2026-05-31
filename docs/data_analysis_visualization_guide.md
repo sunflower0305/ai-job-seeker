@@ -62,7 +62,7 @@ chart_files = visualizer.generate_all_charts()
 
 ```bash
 # 数据分析
-cd /home/leyang/workplace/bishe/data_process
+cd /Users/joe/ai/ai-job-seeker/data_process
 python3 analyzer.py
 
 # 数据可视化
@@ -356,7 +356,7 @@ print("分析报告和可视化图表已生成！")
 
 ```bash
 # 测试数据分析
-cd /home/leyang/workplace/bishe/data_process
+cd /Users/joe/ai/ai-job-seeker/data_process
 python3 test_analyzer.py
 
 # 测试数据可视化
