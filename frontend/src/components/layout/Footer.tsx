@@ -16,17 +16,26 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">快速链接</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/jobs" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <a
+                  href="/jobs"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   职位列表
                 </a>
               </li>
               <li>
-                <a href="/recommendations" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <a
+                  href="/recommendations"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   薪资预测
                 </a>
               </li>
               <li>
-                <a href="/companies" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <a
+                  href="/companies"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   企业列表
                 </a>
               </li>
@@ -38,17 +47,26 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">帮助支持</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/help" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <a
+                  href="/help"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   使用帮助
                 </a>
               </li>
               <li>
-                <a href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <a
+                  href="/privacy"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   隐私政策
                 </a>
               </li>
               <li>
-                <a href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <a
+                  href="/terms"
+                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                >
                   服务条款
                 </a>
               </li>
@@ -59,16 +77,15 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">联系我们</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li>邮箱: contact@jobplatform.com</li>
-              <li>电话: 400-123-4567</li>
-              <li>地址: 北京市朝阳区xxx路xxx号</li>
+              <li>邮箱: contact@zhangleyang.com</li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-800">
           <p className="text-center text-gray-400 text-sm">
-            © 2024 职位推荐平台. All rights reserved. | Next.js 14 + TypeScript + Tailwind CSS
+            © 2026 职位推荐平台. All rights reserved. | Next.js + TypeScript +
+            Tailwind CSS
           </p>
         </div>
       </div>
