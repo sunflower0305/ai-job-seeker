@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import MarkdownMessage from './MarkdownMessage'
 import '@/styles/markdown.css'
+import { apiUrl } from '@/lib/api'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -45,7 +46,7 @@ export default function AIAssistantChat({
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/ai-assistant/chat/', {
+      const response = await fetch(apiUrl('/api/jobs/ai-assistant/chat/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ export default function AIAssistantChat({
     if (!sessionId) return
 
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/ai-assistant/reset/', {
+      const response = await fetch(apiUrl('/api/jobs/ai-assistant/reset/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

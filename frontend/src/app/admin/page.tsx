@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { apiUrl } from '@/lib/api';
 
 interface Statistics {
   users: {
@@ -104,7 +105,7 @@ export default function AdminDashboard() {
   const fetchStatistics = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/users/admin/statistics/', {
+      const response = await fetch(apiUrl('/api/users/admin/statistics/'), {
         headers: {
           'Authorization': `Token ${token}`,
         },
@@ -125,7 +126,7 @@ export default function AdminDashboard() {
   const fetchAnalytics = async (days = 30) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/users/admin/analytics/?days=${days}`, {
+      const response = await fetch(apiUrl(`/api/users/admin/analytics/?days=${days}`), {
         headers: {
           'Authorization': `Token ${token}`,
         },
@@ -148,7 +149,7 @@ export default function AdminDashboard() {
       if (searchTerm) params.append('search', searchTerm);
       if (roleFilter) params.append('role', roleFilter);
 
-      const response = await fetch(`http://localhost:8000/api/users/admin/users/?${params}`, {
+      const response = await fetch(apiUrl(`/api/users/admin/users/?${params}`), {
         headers: {
           'Authorization': `Token ${token}`,
         },
@@ -169,7 +170,7 @@ export default function AdminDashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/users/admin/users/', {
+      const response = await fetch(apiUrl('/api/users/admin/users/'), {
         method: 'DELETE',
         headers: {
           'Authorization': `Token ${token}`,
@@ -483,7 +484,7 @@ export default function AdminDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"

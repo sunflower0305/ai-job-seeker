@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Job } from '@/types';
+import { apiUrl } from '@/lib/api';
 
 interface Collection {
   id: number;
@@ -31,7 +32,7 @@ export default function CollectionsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/jobs/collections/', {
+      const response = await fetch(apiUrl('/api/jobs/collections/'), {
         headers: {
           'Authorization': `Token ${token}`,
         },
@@ -57,7 +58,7 @@ export default function CollectionsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/collect/`, {
+      const response = await fetch(apiUrl(`/api/jobs/jobs/${jobId}/collect/`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Token ${token}`,
@@ -115,7 +116,9 @@ export default function CollectionsPage() {
                           {job.title}
                         </h3>
                       </Link>
-                      <p className="text-gray-600 mt-1">{job.company_name || job.company?.name}</p>
+                      <p className="text-gray-600 mt-1">
+                        {job.company_name || (typeof job.company === 'string' ? job.company : job.company?.name)}
+                      </p>
 
                       <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
                         <span className="flex items-center">

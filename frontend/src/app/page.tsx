@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { apiUrl } from '@/lib/api';
 
 export default function Home() {
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -18,7 +19,7 @@ export default function Home() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8000/api/jobs/jobs/statistics/');
+        const response = await fetch(apiUrl('/api/jobs/jobs/statistics/'));
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

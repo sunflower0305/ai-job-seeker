@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import ResumeUploader from '@/components/ui/ResumeUploader'
 import AIAssistantChat from '@/components/ui/AIAssistantChat'
 import Link from 'next/link'
+import { apiUrl } from '@/lib/api'
 
 interface RecommendedJob {
   job_id: number
@@ -55,7 +56,7 @@ export default function AIJobRecommendPage() {
         }
       }
 
-      const response = await fetch('http://localhost:8000/api/ml/recommend/', {
+      const response = await fetch(apiUrl('/api/ml/recommend/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

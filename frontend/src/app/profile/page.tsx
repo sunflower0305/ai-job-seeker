@@ -4,6 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Job, Application } from '@/types';
 
+function getCompanyName(job?: Job): string {
+  if (!job) return '';
+  if (job.company_name) return job.company_name;
+  if (typeof job.company === 'string') return job.company;
+  return job.company?.name || '';
+}
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'info' | 'resume' | 'applications' | 'collections'>('info');
 
@@ -241,7 +248,7 @@ export default function ProfilePage() {
                                 {app.job?.title}
                               </h3>
                             </Link>
-                            <p className="text-gray-600 mt-1">{app.job?.company}</p>
+                            <p className="text-gray-600 mt-1">{getCompanyName(app.job)}</p>
                             <div className="mt-2 flex gap-4 text-sm text-gray-500">
                               <span>{app.job?.location}</span>
                               <span>{app.job?.salary}</span>
@@ -283,7 +290,7 @@ export default function ProfilePage() {
                             {job.title}
                           </h3>
                         </Link>
-                        <p className="text-gray-600 mt-1">{job.company}</p>
+                        <p className="text-gray-600 mt-1">{getCompanyName(job)}</p>
                         <div className="mt-2 flex gap-4 text-sm text-gray-500">
                           <span>{job.location}</span>
                           <span className="text-orange-600 font-medium">{job.salary}</span>

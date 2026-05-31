@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
+    if (process.env.NODE_ENV === 'production') {
+      return [];
+    }
+
     return [
       {
         source: '/api/:path*',

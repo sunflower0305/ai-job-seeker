@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Job } from '@/types';
+import { apiUrl } from '@/lib/api';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -23,7 +24,7 @@ export default function JobDetailPage() {
   const fetchJobDetail = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/`);
+      const response = await fetch(apiUrl(`/api/jobs/jobs/${jobId}/`));
 
       if (response.ok) {
         const data = await response.json();
@@ -32,7 +33,7 @@ export default function JobDetailPage() {
         // 检查是否已收藏（需要登录）
         const token = localStorage.getItem('token');
         if (token) {
-          const collectResponse = await fetch(`http://localhost:8000/api/jobs/collections/?job=${jobId}`, {
+          const collectResponse = await fetch(apiUrl(`/api/jobs/collections/?job=${jobId}`), {
             headers: {
               'Authorization': `Token ${token}`,
             },
@@ -55,7 +56,7 @@ export default function JobDetailPage() {
   const fetchSimilarJobs = async () => {
     try {
       setSimilarJobsLoading(true);
-      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/similar/?top_n=3`);
+      const response = await fetch(apiUrl(`/api/jobs/jobs/${jobId}/similar/?top_n=3`));
 
       if (response.ok) {
         const data = await response.json();
@@ -80,7 +81,7 @@ export default function JobDetailPage() {
 
     try {
       const method = isCollected ? 'DELETE' : 'POST';
-      const response = await fetch(`http://localhost:8000/api/jobs/jobs/${jobId}/collect/`, {
+      const response = await fetch(apiUrl(`/api/jobs/jobs/${jobId}/collect/`), {
         method: method,
         headers: {
           'Authorization': `Token ${token}`,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { apiUrl } from '@/lib/api';
 
 interface PredictionResult {
   predicted_salary: number;
@@ -59,7 +60,7 @@ export default function SalaryPredictionPage() {
     setResult(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/ml/predict-salary/', {
+      const response = await fetch(apiUrl('/api/ml/predict-salary/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

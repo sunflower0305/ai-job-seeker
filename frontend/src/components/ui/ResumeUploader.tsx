@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { apiUrl } from '@/lib/api'
 
 interface ResumeUploaderProps {
   onAnalysisComplete: (analysis: any) => void
@@ -67,7 +68,7 @@ export default function ResumeUploader({ onAnalysisComplete }: ResumeUploaderPro
     formData.append('file', file)
 
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/resume-analysis/analyze/', {
+      const response = await fetch(apiUrl('/api/jobs/resume-analysis/analyze/'), {
         method: 'POST',
         body: formData,
       })

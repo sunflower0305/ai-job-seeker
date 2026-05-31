@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import { apiUrl } from '@/lib/api';
 
 interface DashboardData {
   city_distribution: Array<{ name: string; value: number }>;
@@ -46,7 +47,7 @@ export default function DashboardScreen() {
   // 获取数据
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/dashboard-screen/');
+      const response = await fetch(apiUrl('/api/jobs/dashboard-screen/'));
       if (response.ok) {
         const result = await response.json();
         setData(result);

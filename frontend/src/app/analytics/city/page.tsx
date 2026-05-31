@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 import {
   BarChart,
   Bar,
@@ -33,7 +34,7 @@ export default function CityAnalyticsPage() {
   const fetchStatistics = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/jobs/jobs/statistics/');
+      const response = await fetch(apiUrl('/api/jobs/jobs/statistics/'));
       if (!response.ok) throw new Error('Failed to fetch statistics');
       const result = await response.json();
       setData(result);
@@ -194,7 +195,7 @@ export default function CityAnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={true}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(1)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"

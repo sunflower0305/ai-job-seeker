@@ -32,7 +32,7 @@ db.sqlite3-journal
 /staticfiles
 
 # Environment
-.env
+.env*
 .venv
 
 # IDE
@@ -57,3 +57,5 @@ logs/*.log
 Thumbs.db
 
 node_modules/
+
+Agents.md

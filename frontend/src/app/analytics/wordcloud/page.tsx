@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 import {
   BarChart,
   Bar,
@@ -29,7 +30,7 @@ export default function WordCloudAnalyticsPage() {
   const fetchStatistics = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/jobs/jobs/statistics/');
+      const response = await fetch(apiUrl('/api/jobs/jobs/statistics/'));
       if (!response.ok) throw new Error('Failed to fetch statistics');
       const result = await response.json();
       setData(result);
@@ -109,7 +110,7 @@ export default function WordCloudAnalyticsPage() {
           <div className="flex items-center justify-center rounded-lg overflow-hidden bg-white" style={{ minHeight: 600 }}>
             {data.skills_distribution.length > 0 ? (
               <img
-                src={`http://localhost:8000/api/jobs/jobs/wordcloud/?width=1000&height=700&t=${refreshKey}`}
+                src={apiUrl(`/api/jobs/jobs/wordcloud/?width=1000&height=700&t=${refreshKey}`)}
                 alt="技能需求词云图"
                 className="max-w-full h-auto rounded-lg"
                 style={{ maxHeight: '700px' }}

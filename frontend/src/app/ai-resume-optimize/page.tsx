@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import ResumeUploader from '@/components/ui/ResumeUploader'
+import { apiUrl } from '@/lib/api'
 
 export default function AIResumeOptimizePage() {
   const [resumeAnalysis, setResumeAnalysis] = useState<any>(null)
@@ -31,7 +32,7 @@ export default function AIResumeOptimizePage() {
 
     setIsOptimizing(true)
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/resume-optimize/', {
+      const response = await fetch(apiUrl('/api/jobs/resume-optimize/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +69,7 @@ export default function AIResumeOptimizePage() {
 
     setIsExporting(true)
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/export-report/', {
+      const response = await fetch(apiUrl('/api/jobs/export-report/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +111,7 @@ export default function AIResumeOptimizePage() {
 
     setIsExportingResume(true)
     try {
-      const response = await fetch('http://localhost:8000/api/jobs/export-resume/', {
+      const response = await fetch(apiUrl('/api/jobs/export-resume/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

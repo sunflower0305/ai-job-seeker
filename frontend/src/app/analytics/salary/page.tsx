@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 import {
   BarChart,
   Bar,
@@ -41,7 +42,7 @@ export default function SalaryAnalyticsPage() {
   const fetchStatistics = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/jobs/jobs/statistics/');
+      const response = await fetch(apiUrl('/api/jobs/jobs/statistics/'));
       if (!response.ok) throw new Error('Failed to fetch statistics');
       const result = await response.json();
       setData(result);
