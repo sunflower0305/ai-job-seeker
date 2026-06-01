@@ -1,3 +1,5 @@
+![alt text](image.png)
+
 # AI 求职助手
 
 把求职里最常见的几件事放到同一个系统里：上传简历、分析岗位、推荐职位、预测薪资、优化简历、导出文档。
@@ -187,7 +189,3 @@ python scripts/data/check_data_quality.py
 - [x] 用户系统开发
 - [x] 前端页面开发
 - [x] 系统测试与优化
-
-## 许可证
-
-MIT License
